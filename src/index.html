@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title>
+	<link rel="stylesheet" href="style.css">
+	<script src="app.js" defer></script>
+</head>
+
+<body>
+	<header>
+		<h1>Teacher Kelly's thing</h1>
+	</header>
+	<main>
+		<div id="admin-controls">
+			<form id="add-student">
+				<div>
+					<label for="student-name"></label>
+					<input type="text" name="student-name" required />
+				</div>
+				<div>
+					<input type="submit" id="add-student" value="Add student">
+				</div>
+			</form>
+			<div>
+				<button id="clear-student-store">Clear student records</button>
+				<button id="clear-activities">Clear activity records</button>
+				<button id="delete-database">Delete all data (will reload page)</button>
+				<button id="toggle-results" data-toggle="closed">Show Activities</button>
+				<button id="export-results">Export Activities</button>
+			</div>
+		</div>
+
+		<!-- Students container -->
+		<div id="students"></div>
+
+		<!-- Results container -->
+		<div id="results"></div>
+
+		<!-- Student activity form template -->
+		<template id="student">
+			<div id="{name}">
+				<h2 id="{name}-header"></h2>
+				<div class="activities"></div>
+				<form id="{buttonId}">
+					<div>
+						<label for="activity">Add Activity</label>
+						<input type="text" name="activity-name" required />
+					</div>
+					<div>
+						<input type="submit" value="{Button 1}" />
+					</div>
+				</form>
+				<div class="delete-student">
+					<button>Delete Student</button>
+				</div>
+			</div>
+		</template>
+
+		<!-- Activity entry template -->
+		<template id="activity">
+			<div><button id="{activity-name}"></button></div>
+		</template>
+
+		<!-- Activity table template -->
+		<template id="activities">
+			<table>
+				<thead>
+					<tr>
+						<th>Student name</th>
+						<th>Activity</th>
+						<th>Timestamp</th>
+					</tr>
+				</thead>
+				<tbody class="records">
+
+				</tbody>
+			</table>
+		</template>
+
+		<!-- Activity record template -->
+		<template id="record">
+			<tr class="row">
+				<td class="name"></td>
+				<td class="activity"></td>
+				<td class="timestamp"></td>
+			</tr>
+		</template>
+	</main>
+	<footer></footer>
+</body>
+
+</html>
