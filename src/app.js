@@ -365,7 +365,9 @@ window.addEventListener("DOMContentLoaded", async () => {
 		container.id = `student-${id}`;
 
 		// Set the background color
-		container.style.backgroundColor = student.config.color;
+		if (student.config?.color) {
+			container.style.backgroundColor = student.config.color;
+		}
 
 		// studentElement.
 
