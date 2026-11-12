@@ -15,8 +15,8 @@
 	</header>
 	<main>
 		<!-- Admin controls -->
-		<div id="admin-controls">
-			<h2>Admin controls</h2>
+		<div class="admin-controls" id="admin-controls">
+			<h2 class="admin-controls__header">Admin controls</h2>
 			<form class="form" id="add-student">
 				<div class="form-control">
 					<label class="label" for="student-name" placeholder="Student name (required)">Student name</label>
@@ -40,8 +40,9 @@
 		</div>
 
 		<!-- Students container -->
-		<div id="students">
-			<h2>Students list</h2>
+		<div class="students-container" id="students-container">
+			<h2 class="students-container__header">Students list</h2>
+			<div class="students" id="students"></div>
 		</div>
 
 		<!-- Results container -->
@@ -50,8 +51,10 @@
 		<!-- Student activity form template -->
 		<template id="student">
 			<div class="student" id="{name}">
-				<h2 class="student-header" id="{name}-header"></h2>
-				<div class="student-activities"></div>
+				<div class="student-header">
+					<h2 id="{name}-header"></h2>
+					<button class="delete-student button" title="Delete Student">×</button>
+				</div>
 				<form class="form" id="{buttonId}">
 					<div class="form-control">
 						<label class="label" for="activity">New activity name</label>
@@ -61,8 +64,8 @@
 						<input class="input-submit button" type="submit" value="{Button 1}" />
 					</div>
 				</form>
-				<div class="form-control delete-student">
-					<button class="button">Delete Student</button>
+				<div class="student-activities">
+					<h3>Tracked activities</h3>
 				</div>
 			</div>
 		</template>
@@ -76,9 +79,9 @@
 
 		<!-- Activity table template -->
 		<template id="activities">
-			<table>
+			<table class="activities-table">
 				<thead>
-					<tr>
+					<tr class="header-row">
 						<th>Student name</th>
 						<th>Activity</th>
 						<th>Timestamp</th>
@@ -90,7 +93,7 @@
 
 		<!-- Activity record template -->
 		<template id="record">
-			<tr class="row">
+			<tr class="activity-row">
 				<td class="name"></td>
 				<td class="activity"></td>
 				<td class="timestamp"></td>

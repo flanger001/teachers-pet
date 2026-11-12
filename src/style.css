@@ -1,6 +1,17 @@
 body {
-    padding: 0px 30px 30px 30px;
+    padding: 10px 30px 30px 30px;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    overflow-y: scroll;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin: 0;
+    padding: 0;
 }
 
 .form {
@@ -13,7 +24,7 @@ body {
     margin-bottom: 10px;
 }
 
-.form-control, .activity-button {
+.form-control {
     margin-bottom: 20px;
 }
 
@@ -38,8 +49,64 @@ body {
     display: inline-block;
     padding: 8px;
     margin-right: 10px;
+    border-radius: 10px;
+    border-width: 1px;
+    border-color: #888;
 }
 
 .text-center {
     text-align: center;
+}
+
+.students-container__header,
+.admin-controls__header {
+    margin-bottom: 20px;
+}
+
+.students {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.student-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px 20px 20px 0px;
+}
+
+.delete-student {
+    --delete-student-background-color: #ff1111;
+    background-color: var(--delete-student-background-color);
+    transition: background-color 0.1s;
+
+    &:hover {
+        cursor: pointer;
+        background-color: #ff9999;
+    }
+}
+
+.student-activities {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.activities-table {
+    table-layout: fixed;
+    width: 90%;
+    /* margin: 10px auto; */
+    border-collapse: collapse;
+
+    & .header-row {
+        text-align: left;
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+
+    th,
+    td {
+        padding: 0.6rem;
+    }
 }

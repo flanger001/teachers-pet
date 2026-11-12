@@ -160,8 +160,8 @@ class DatabaseClient {
 		// Find the student first
 		const student = await this.findStudentByName(studentName);
 		// Create the timestamp record and push it to the student's record
-		const timestamp = Temporal.Now.instant();
-		const activityRecord = { name: activityName, time: timestamp.toString() }
+		const timestamp = Temporal.Now.zonedDateTimeISO();
+		const activityRecord = { name: activityName, time: timestamp.toLocaleString() }
 		student.occurrences.push(activityRecord);
 
 		return new Promise((resolve, reject) => {
@@ -239,9 +239,10 @@ window.addEventListener("DOMContentLoaded", async () => {
 	const clearStudentsStoreButton = document.getElementById(`clear-${STUDENT_OBJECT_STORE_NAME}-store`);
 	const clearActivitiesButton = document.getElementById("clear-activities");
 	const deleteDatabaseButton = document.getElementById("delete-database")
-	const toggleResultsButton = document.getElementById("toggle-results")
 	const studentsContainer = document.getElementById("students");
 	const addStudentForm = document.getElementById("add-student");
+	const toggleResultsButton = document.getElementById("toggle-results")
+	const resultsContainer = document.getElementById("results");
 	const exportResultsButton = document.getElementById("export-results");
 
 	// Event listeners
@@ -251,7 +252,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 		event.stopPropagation();
 		client.clearStore(STUDENT_OBJECT_STORE_NAME);
 		const studentsContainer = document.getElementById("students");
-		studentsContainer.textContent = "";
+		studentsContainer.replaceChildren();
 	});
 
 	clearActivitiesButton.addEventListener("click", async (event) => {
@@ -265,7 +266,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 		const studentsContainer = document.getElementById("students");
 		const activitiesContainers = studentsContainer.getElementsByClassName("student-activities");
 		for (const element of activitiesContainers) {
-			element.textContent = "";
+			element.replaceChildren();
 		}
 	});
 
@@ -277,32 +278,15 @@ window.addEventListener("DOMContentLoaded", async () => {
 	});
 
 	toggleResultsButton.addEventListener("click", async (event) => {
-		const resultsContainer = document.getElementById("results");
 		event.preventDefault();
 		event.stopPropagation();
 		if (toggleResultsButton.dataset.toggle == "closed") {
-			toggleResultsButton.dataset.toggle = "open";
-			toggleResultsButton.textContent = "Hide Activities"
-			const students = await client.getAllStudents();
-			const resultsTemplate = document.getElementById("activities");
-			const resultsElement = document.importNode(resultsTemplate.content, true);
-			const recordsContainer = resultsElement.querySelector(".records");
-			const recordTemplate = document.getElementById("record");
-			for (const student of students) {
-				for (const occurrence of student.occurrences) {
-					const recordElement = document.importNode(recordTemplate.content, true);
-					recordElement.querySelector(".name").textContent = student.name;
-					recordElement.querySelector(".activity").textContent = occurrence.name;
-					recordElement.querySelector(".timestamp").textContent = occurrence.time;
-					recordsContainer.appendChild(recordElement);
-				}
-			}
-			resultsContainer.appendChild(resultsElement);
+			createResults();
 		}
 		else {
 			toggleResultsButton.dataset.toggle = "closed";
 			toggleResultsButton.textContent = "Show Activities";
-			resultsContainer.textContent = "";
+			resultsContainer.replaceChildren();
 		}
 	});
 
@@ -374,6 +358,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 		// Set the button name
 		const studentNameHeader = studentElement.getElementById("{name}-header")
 		studentNameHeader.id = `student-${id}-header`;
+
 		studentNameHeader.textContent = studentName;
 
 		// Set the form ID
@@ -397,15 +382,20 @@ window.addEventListener("DOMContentLoaded", async () => {
 			activitiesContainer.appendChild(activityElement);
 		});
 
-		const deleteStudentButton = container.querySelector(".delete-student button");
+		const deleteStudentButton = container.querySelector(".delete-student");
 		deleteStudentButton.addEventListener("click", async (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			await client.deleteStudent(studentName);
-			const container = document.getElementById(`student-${id}`);
-			container.remove();
-			if (permission === "granted") {
-				new Notification("Student deleted", { body: `Deleted ${studentName}` });
+			if (confirm(`Are you sure you want to delete ${studentName}?`)) {
+				await client.deleteStudent(studentName);
+				const container = document.getElementById(`student-${id}`);
+				container.remove();
+				if (permission === "granted") {
+					new Notification("Student deleted", { body: `Deleted ${studentName}` });
+				}
+				if (toggleResultsButton.dataset.toggle = "open") {
+					createResults();
+				}
 			}
 		});
 
@@ -424,14 +414,37 @@ window.addEventListener("DOMContentLoaded", async () => {
 		const button = activityElement.getElementById("{activity-name}");
 		button.id = id;
 		button.textContent = `Record activity: ${activityName}`;
-		button.addEventListener("click", () => {
-			client.recordStudentActivity(student.name, activityName);
+		button.addEventListener("click", async () => {
+			await client.recordStudentActivity(student.name, activityName);
 			if (permission === "granted") {
 				new Notification("Activity recorded", { body: `Recorded ${activityName} occurrence for ${student.name}` });
+			}
+			if (toggleResultsButton.dataset.toggle = "open") {
+				createResults();
 			}
 		});
 		return activityElement;
 	};
+
+	const createResults = async () => {
+		toggleResultsButton.dataset.toggle = "open";
+		toggleResultsButton.textContent = "Hide Activities"
+		const students = await client.getAllStudents();
+		const resultsTemplate = document.getElementById("activities");
+		const resultsElement = document.importNode(resultsTemplate.content, true);
+		const recordsContainer = resultsElement.querySelector(".records");
+		const recordTemplate = document.getElementById("record");
+		for (const student of students) {
+			for (const occurrence of student.occurrences) {
+				const recordElement = document.importNode(recordTemplate.content, true);
+				recordElement.querySelector(".name").textContent = student.name;
+				recordElement.querySelector(".activity").textContent = occurrence.name;
+				recordElement.querySelector(".timestamp").textContent = occurrence.time;
+				recordsContainer.appendChild(recordElement);
+			}
+		}
+		resultsContainer.replaceChildren(resultsElement);
+	}
 
 	try {
 		const students = await client.getAllStudents();
