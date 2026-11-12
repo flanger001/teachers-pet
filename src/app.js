@@ -11,15 +11,15 @@ const DATABASE_NAME = "students";
 const STUDENT_OBJECT_STORE_NAME = "student";
 const ACTIVITY_OBJECT_STORE_NAME = "activity";
 
-class Client {
+class DatabaseClient {
 	#database;
 	constructor(database) {
 		this.#database = database;
 	}
 
 	static init() {
-		let client;
 		return new Promise((resolve, reject) => {
+			let client;
 			let database;
 			console.log("Opening database");
 			const dbOpenRequest = window.indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
@@ -81,9 +81,9 @@ class Client {
 		});
 	}
 
-	addStudent(studentName) {
+	addStudent(studentName, config) {
 		// Create the new empty student record
-		const record = { name: studentName, activities: [], occurrences: [] };
+		const record = { name: studentName, activities: [], occurrences: [], config };
 
 		return new Promise((resolve, reject) => {
 			const transaction = this.#database.transaction([STUDENT_OBJECT_STORE_NAME], "readwrite");
@@ -217,11 +217,35 @@ class Client {
 	}
 }
 
-window.addEventListener("DOMContentLoaded", async () => {
-	const client = await Client.init();
-	console.log(`Creating global event listeners for ${STUDENT_OBJECT_STORE_NAME}`);
+// Utility functions
+const randomId = (name) => {
+	let result = `${name.toLowerCase()}-`;
+	for (let i = 0; i < 6; i++) {
+		result += String.fromCharCode(97 + Math.floor(Math.random() * 26));
+	}
+	return result.replaceAll(/\s+/g, "-");
+};
 
-	const clearStudentsStoreButton = document.getElementById(`clear-${STUDENT_OBJECT_STORE_NAME}-store`)
+
+window.addEventListener("DOMContentLoaded", async () => {
+	// Initialize the database client
+	const client = await DatabaseClient.init();
+
+	// Request notification permission
+	const permission = await Notification.requestPermission();
+	console.log("Notification permission", permission);
+
+	// Containers and buttons
+	const clearStudentsStoreButton = document.getElementById(`clear-${STUDENT_OBJECT_STORE_NAME}-store`);
+	const clearActivitiesButton = document.getElementById("clear-activities");
+	const deleteDatabaseButton = document.getElementById("delete-database")
+	const toggleResultsButton = document.getElementById("toggle-results")
+	const studentsContainer = document.getElementById("students");
+	const addStudentForm = document.getElementById("add-student");
+	const exportResultsButton = document.getElementById("export-results");
+
+	// Event listeners
+	console.log(`Creating global event listeners for ${STUDENT_OBJECT_STORE_NAME} store`);
 	clearStudentsStoreButton.addEventListener("click", (event) => {
 		event.preventDefault();
 		event.stopPropagation();
@@ -230,7 +254,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 		studentsContainer.textContent = "";
 	});
 
-	const clearActivitiesButton = document.getElementById(`clear-activities`);
 	clearActivitiesButton.addEventListener("click", async (event) => {
 		event.preventDefault();
 		event.stopPropagation();
@@ -240,14 +263,12 @@ window.addEventListener("DOMContentLoaded", async () => {
 			}
 		}
 		const studentsContainer = document.getElementById("students");
-		const activitiesContainers = studentsContainer.getElementsByClassName("activities");
+		const activitiesContainers = studentsContainer.getElementsByClassName("student-activities");
 		for (const element of activitiesContainers) {
 			element.textContent = "";
 		}
 	});
 
-
-	const deleteDatabaseButton = document.getElementById("delete-database")
 	deleteDatabaseButton.addEventListener("click", (event) => {
 		event.preventDefault();
 		event.stopPropagation();
@@ -255,7 +276,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 		window.location.reload();
 	});
 
-	const toggleResultsButton = document.getElementById("toggle-results")
 	toggleResultsButton.addEventListener("click", async (event) => {
 		const resultsContainer = document.getElementById("results");
 		event.preventDefault();
@@ -285,15 +305,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 			resultsContainer.textContent = "";
 		}
 	});
-	const listData = async () => {
-		const students = await client.getAllStudents();
-		console.log(students);
-	};
 
-	// Containers
-	const studentsContainer = document.getElementById("students");
-
-	const addStudentForm = document.getElementById("add-student");
 	addStudentForm.addEventListener("submit", async (event) => {
 		event.preventDefault();
 		event.stopPropagation();
@@ -301,9 +313,13 @@ window.addEventListener("DOMContentLoaded", async () => {
 			const form = event.target;
 			const formData = new FormData(form);
 			const studentName = formData.get("student-name");
-			const id = await client.addStudent(studentName);
+			const studentColor = formData.get("student-color");
+			const id = await client.addStudent(studentName, { color: studentColor });
+			if (permission === "granted") {
+				new Notification("Student added", { body: `Successfully added student ${studentName}` });
+			}
 			const student = await client.findStudentById(id);
-			const studentElement = await createStudentElement(student);
+			const studentElement = createStudentElement(student);
 
 			studentsContainer.appendChild(studentElement);
 			addStudentForm.reset();
@@ -314,74 +330,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 		}
 	});
 
-	const createStudentElement = (student) => {
-		// Extract the student variables
-		const { name: studentName, id } = student;
-		// Get the student template
-		const template = document.getElementById("student");
-		const studentTemplate = document.importNode(template.content, true);
-		const studentForm = studentTemplate.getElementById("{buttonId}");
-
-		// Set the container id
-		const container = studentTemplate.firstElementChild;
-		container.id = `student-${id}`;
-
-		// Set the button name
-		const studentNameHeader = studentTemplate.getElementById("{name}-header")
-		studentNameHeader.id = `student-${id}-header`;
-		studentNameHeader.textContent = studentName;
-
-		// Set the form ID
-		studentForm.id = `student-${id}-activities`;
-
-		// Set the submit button ID and value
-		const studentFormSubmitButton = studentTemplate.querySelector(`input[type="submit"`);
-		studentFormSubmitButton.value = `Add activity for ${studentName} `;
-
-		// Get activity template
-		studentForm.addEventListener("submit", async (event) => {
-			event.preventDefault();
-			event.stopPropagation();
-			const form = event.target;
-			const formData = new FormData(form);
-			const activityName = formData.get("activity-name");
-			await client.addActivityToStudent(student.id, activityName);
-			const studentContainer = document.getElementById(container.id);
-			const activitiesContainer = studentContainer.querySelector(".activities");
-			const activityElement = createActivityElement(student, activityName);
-			activitiesContainer.appendChild(activityElement);
-		});
-
-		const deleteStudentButton = container.querySelector(".delete-student button");
-		deleteStudentButton.addEventListener("click", async (event) => {
-			event.preventDefault();
-			event.stopPropagation();
-			await client.deleteStudent(studentName);
-			const container = document.getElementById(`student-${id}`);
-			container.remove();
-		})
-
-		return studentTemplate;
-	};
-
-	const createActivityElement = (student, activityName) => {
-		const template = document.getElementById("activity");
-		const activityTemplate = document.importNode(template.content, true);
-
-		// Set and store the activity ID
-		const id = randomId(activityName);
-
-		// Get the activity template
-		// Set the button ID and text
-		const button = activityTemplate.getElementById("{activity-name}");
-		button.id = id;
-		button.textContent = `Record activity: ${activityName}`;
-		button.addEventListener("click", () => client.recordStudentActivity(student.name, activityName));
-		return activityTemplate;
-	};
-
-	const exportResultsButton = document.getElementById("export-results");
-	const exportResults = async (event) => {
+	exportResultsButton.addEventListener("click", async (event) => {
 		event.preventDefault();
 		event.stopPropagation();
 		const students = await client.getAllStudents();
@@ -401,30 +350,102 @@ window.addEventListener("DOMContentLoaded", async () => {
 		a.style.display = "none";
 		a.click();
 		URL.revokeObjectURL(url);
-	};
-	exportResultsButton.addEventListener("click", exportResults);
+	});
 
-	const students = await client.getAllStudents();
-	for (const student of students) {
-		const studentElement = createStudentElement(student);
-		studentsContainer.appendChild(studentElement);
-		if (student.activities?.length > 0) {
-			const studentContainer = document.getElementById(`student-${student.id}`);
-			const activitiesContainer = studentContainer.querySelector(".activities");
-			for (const activityName of student.activities) {
-				const activityElement = createActivityElement(student, activityName);
-				activitiesContainer.appendChild(activityElement);
+	const createStudentElement = (student) => {
+		// Extract the student variables
+		const { name: studentName, id, config } = student;
+		// Get the student template
+		const template = document.getElementById("student");
+		const studentElement = document.importNode(template.content, true);
+		const studentForm = studentElement.getElementById("{buttonId}");
+
+		// Set the container id
+		const container = studentElement.firstElementChild;
+		container.id = `student-${id}`;
+
+		// Set the background color
+		container.style.backgroundColor = student.config.color;
+
+		// studentElement.
+
+		// Set the button name
+		const studentNameHeader = studentElement.getElementById("{name}-header")
+		studentNameHeader.id = `student-${id}-header`;
+		studentNameHeader.textContent = studentName;
+
+		// Set the form ID
+		studentForm.id = `student-${id}-activities`;
+
+		// Set the submit button ID and value
+		const studentFormSubmitButton = studentElement.querySelector(`input[type="submit"]`);
+		studentFormSubmitButton.value = `Add activity for ${studentName} `;
+
+		// Get activity template
+		studentForm.addEventListener("submit", async (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			const form = event.target;
+			const formData = new FormData(form);
+			const activityName = formData.get("activity-name");
+			await client.addActivityToStudent(student.id, activityName);
+			const studentContainer = document.getElementById(container.id);
+			const activitiesContainer = studentContainer.querySelector(".student-activities");
+			const activityElement = createActivityElement(student, activityName);
+			activitiesContainer.appendChild(activityElement);
+		});
+
+		const deleteStudentButton = container.querySelector(".delete-student button");
+		deleteStudentButton.addEventListener("click", async (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			await client.deleteStudent(studentName);
+			const container = document.getElementById(`student-${id}`);
+			container.remove();
+		});
+
+		return studentElement;
+	};
+
+	const createActivityElement = (student, activityName) => {
+		const template = document.getElementById("activity");
+		const activityElement = document.importNode(template.content, true);
+
+		// Set and store the activity ID
+		const id = randomId(activityName);
+
+		// Get the activity template
+		// Set the button ID and text
+		const button = activityElement.getElementById("{activity-name}");
+		button.id = id;
+		button.textContent = `Record activity: ${activityName}`;
+		button.addEventListener("click", () => {
+			client.recordStudentActivity(student.name, activityName);
+			if (permission === "granted") {
+				new Notification("Activity recorded", { body: `Recorded ${activityName} occurrence for ${student.name}` });
+			}
+		});
+		return activityElement;
+	};
+
+	try {
+		const students = await client.getAllStudents();
+		for (const student of students) {
+			const studentElement = createStudentElement(student);
+			studentsContainer.appendChild(studentElement);
+			if (student.activities?.length > 0) {
+				const studentContainer = document.getElementById(`student-${student.id}`);
+				const activitiesContainer = studentContainer.querySelector(".student-activities");
+				for (const activityName of student.activities) {
+					const activityElement = createActivityElement(student, activityName);
+					activitiesContainer.appendChild(activityElement);
+				}
 			}
 		}
 	}
-});
-
-
-
-const randomId = (name) => {
-	let result = `${name.toLowerCase()}-`;
-	for (let i = 0; i < 6; i++) {
-		result += String.fromCharCode(97 + Math.floor(Math.random() * 26));
+	catch (error) {
+		// Database not initialized, therefore there is no data to render.
+		// This is not a proper error, so we are swallowing the "error".
+		// console.log(error);
 	}
-	return result.replaceAll(/\s+/g, "-");
-};
+});
