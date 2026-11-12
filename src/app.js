@@ -226,7 +226,7 @@ const randomId = (name) => {
 	return result.replaceAll(/\s+/g, "-");
 };
 
-
+// Set up the app
 window.addEventListener("DOMContentLoaded", async () => {
 	// Initialize the database client
 	const client = await DatabaseClient.init();
@@ -404,6 +404,9 @@ window.addEventListener("DOMContentLoaded", async () => {
 			await client.deleteStudent(studentName);
 			const container = document.getElementById(`student-${id}`);
 			container.remove();
+			if (permission === "granted") {
+				new Notification("Student deleted", { body: `Deleted ${studentName}` });
+			}
 		});
 
 		return studentElement;
