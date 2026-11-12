@@ -11,57 +11,67 @@
 
 <body>
 	<header>
-		<h1>Teacher Kelly's thing</h1>
+		<h1 class="text-center">Student Activity Log</h1>
 	</header>
 	<main>
+		<!-- Admin controls -->
 		<div id="admin-controls">
-			<form id="add-student">
-				<div>
-					<label for="student-name"></label>
-					<input type="text" name="student-name" required />
+			<h2>Admin controls</h2>
+			<form class="form" id="add-student">
+				<div class="form-control">
+					<label class="label" for="student-name" placeholder="Student name (required)">Student name</label>
+					<input class="input-text" type="text" name="student-name" required />
 				</div>
+				<div class="form-control">
+					<label class="label" for="student-color">Color</label>
+					<input class="input-color" type="color" name="student-color" value="#e0e0ff" />
+				</div class="form-control">
 				<div>
-					<input type="submit" id="add-student" value="Add student">
+					<input class="input-submit button" type="submit" id="add-student" value="Add student">
 				</div>
 			</form>
-			<div>
-				<button id="clear-student-store">Clear student records</button>
-				<button id="clear-activities">Clear activity records</button>
-				<button id="delete-database">Delete all data (will reload page)</button>
-				<button id="toggle-results" data-toggle="closed">Show Activities</button>
-				<button id="export-results">Export Activities</button>
+			<div class="form-control">
+				<button class="button" id="clear-student-store">Clear student records</button>
+				<button class="button" id="clear-activities">Clear activity records</button>
+				<button class="button" id="delete-database">Delete all data (will reload page)</button>
+				<button class="button" id="toggle-results" data-toggle="closed">Show Activities</button>
+				<button class="button" id="export-results">Export Activities</button>
 			</div>
 		</div>
 
 		<!-- Students container -->
-		<div id="students"></div>
+		<div id="students">
+			<h2>Students list</h2>
+		</div>
 
 		<!-- Results container -->
 		<div id="results"></div>
 
 		<!-- Student activity form template -->
 		<template id="student">
-			<div id="{name}">
-				<h2 id="{name}-header"></h2>
-				<div class="activities"></div>
-				<form id="{buttonId}">
-					<div>
-						<label for="activity">Add Activity</label>
-						<input type="text" name="activity-name" required />
+			<div class="student" id="{name}">
+				<h2 class="student-header" id="{name}-header"></h2>
+				<div class="student-activities"></div>
+				<form class="form" id="{buttonId}">
+					<div class="form-control">
+						<label class="label" for="activity">New activity name</label>
+						<input class="input-text" type="text" name="activity-name" required />
 					</div>
-					<div>
-						<input type="submit" value="{Button 1}" />
+					<div class="form-control">
+						<input class="input-submit button" type="submit" value="{Button 1}" />
 					</div>
 				</form>
-				<div class="delete-student">
-					<button>Delete Student</button>
+				<div class="form-control delete-student">
+					<button class="button">Delete Student</button>
 				</div>
 			</div>
 		</template>
 
 		<!-- Activity entry template -->
 		<template id="activity">
-			<div><button id="{activity-name}"></button></div>
+			<div class="activity-button">
+				<button class="button" id="{activity-name}"></button>
+			</div>
 		</template>
 
 		<!-- Activity table template -->
@@ -74,9 +84,7 @@
 						<th>Timestamp</th>
 					</tr>
 				</thead>
-				<tbody class="records">
-
-				</tbody>
+				<tbody class="records"></tbody>
 			</table>
 		</template>
 
@@ -91,5 +99,4 @@
 	</main>
 	<footer></footer>
 </body>
-
 </html>
