@@ -86,7 +86,7 @@ class DatabaseClient {
 
 				if (!database.objectStoreNames.contains(ACTIVITY_OBJECT_STORE_NAME)) {
 					const activityObjectStore = database.createObjectStore(ACTIVITY_OBJECT_STORE_NAME, { keyPath: "id", autoIncrement: true });
-					activityObjectStore.createIndex("name", "name", { unique: true });
+					activityObjectStore.createIndex("name", "name");
 					console.log(`Created ${ACTIVITY_OBJECT_STORE_NAME} store`);
 				}
 				else {
