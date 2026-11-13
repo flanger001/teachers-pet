@@ -31,8 +31,8 @@
 				</div>
 			</form>
 			<div class="form-control">
-				<button class="button" id="clear-student-store">Clear student records</button>
-				<button class="button" id="clear-activities">Clear activity records</button>
+				<!-- <button class="button" id="clear-student-store">Clear student records</button>
+				<button class="button" id="clear-activity-store">Clear activity records</button> -->
 				<button class="button" id="delete-database">Delete all data (will reload page)</button>
 				<button class="button" id="toggle-results" data-toggle="closed">Show Activities</button>
 				<button class="button" id="export-results">Export Activities</button>
@@ -50,18 +50,18 @@
 
 		<!-- Student activity form template -->
 		<template id="student">
-			<div class="student" id="{name}">
+			<div class="student">
 				<div class="student-header">
-					<h2 id="{name}-header"></h2>
+					<h2 class="student-name"></h2>
 					<button class="delete-student button" title="Delete Student">×</button>
 				</div>
-				<form class="form" id="{buttonId}">
+				<form class="form student-activity-form">
 					<div class="form-control">
 						<label class="label" for="activity">New activity name</label>
 						<input class="input-text" type="text" name="activity-name" required />
 					</div>
 					<div class="form-control">
-						<input class="input-submit button" type="submit" value="{Button 1}" />
+						<input class="input-submit button" type="submit" />
 					</div>
 				</form>
 				<div class="student-activities">
@@ -72,8 +72,11 @@
 
 		<!-- Activity entry template -->
 		<template id="activity">
-			<div class="activity-button">
-				<button class="button" id="{activity-name}"></button>
+			<div class="activity-buttons">
+				<p class="activity-name"></p>
+				<button class="button record-occurrence-button">Record occurence</button>
+				<button class="button remove-occurrence-button">Remove occurences</button>
+				<button class="button untrack-activity-button">Stop tracking</button>
 			</div>
 		</template>
 

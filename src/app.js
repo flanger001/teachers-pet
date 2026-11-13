@@ -1,22 +1,56 @@
-// Kelly's project
-// Student activity tracker
+// Type definitions
+/**
+ * @typedef Student
+ * @type {object}
+ * @property {number} [id]
+ * @property {string} name
+ * @property {StudentConfig} config
+ * @property {number[]} activities
+ */
 
-// Needs a form to add a student
-// Needs a form per-student to add activities
-// Needs a button per-activity to log said activity
+/**
+ * @typedef StudentConfig
+ * @type {object}
+ * @property {string} color
+ */
+
+/**
+ * @typedef Activity
+ * @type {object}
+ * @property {number} [id]
+ * @property {string} name
+ */
+
+/**
+ * @typedef Occurrence
+ * @type {object}
+ * @property {number} [id]
+ * @property {number} activityId
+ * @property {number} studentId
+ * @property {string} timestamp
+ */
 
 // Globals
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
 const DATABASE_NAME = "students";
 const STUDENT_OBJECT_STORE_NAME = "student";
 const ACTIVITY_OBJECT_STORE_NAME = "activity";
+const OCCURRENCE_OBJECT_STORE_NAME = "occurrence";
 
 class DatabaseClient {
 	#database;
 	constructor(database) {
 		this.#database = database;
 	}
-
+	get students() {
+		return new Students(this.#database);
+	}
+	get activities() {
+		return new Activities(this.#database);
+	}
+	get occurrences() {
+		return new Occurrences(this.#database);
+	}
 	static init() {
 		return new Promise((resolve, reject) => {
 			let client;
@@ -38,143 +72,39 @@ class DatabaseClient {
 			dbOpenRequest.onupgradeneeded = (event) => {
 				console.log(`Database on version ${event.oldVersion}, upgrade to ${event.newVersion} requested`);
 				database = event.target.result;
-				console.log("Creating object stores");
+				console.log(database.objectStoreNames);
 
-				const studentObjectStore = database.createObjectStore(STUDENT_OBJECT_STORE_NAME, { keyPath: "id", autoIncrement: true });
-				studentObjectStore.createIndex("name", "name", { unique: true });
-				console.log(`Created ${STUDENT_OBJECT_STORE_NAME} store`);
+				console.log("Creating object stores");
+				if (!database.objectStoreNames.contains(STUDENT_OBJECT_STORE_NAME)) {
+					const studentObjectStore = database.createObjectStore(STUDENT_OBJECT_STORE_NAME, { keyPath: "id", autoIncrement: true });
+					studentObjectStore.createIndex("name", "name", { unique: true });
+					console.log(`Created ${STUDENT_OBJECT_STORE_NAME} store`);
+				}
+				else {
+					console.log("Object store already exists:", STUDENT_OBJECT_STORE_NAME);
+				}
+
+				if (!database.objectStoreNames.contains(ACTIVITY_OBJECT_STORE_NAME)) {
+					const activityObjectStore = database.createObjectStore(ACTIVITY_OBJECT_STORE_NAME, { keyPath: "id", autoIncrement: true });
+					activityObjectStore.createIndex("name", "name", { unique: true });
+					console.log(`Created ${ACTIVITY_OBJECT_STORE_NAME} store`);
+				}
+				else {
+					console.log("Object store already exists:", ACTIVITY_OBJECT_STORE_NAME);
+				}
+
+				if (!database.objectStoreNames.contains(OCCURRENCE_OBJECT_STORE_NAME)) {
+					const occurrenceObjectStore = database.createObjectStore(OCCURRENCE_OBJECT_STORE_NAME, { keyPath: "id", autoIncrement: true });
+					occurrenceObjectStore.createIndex("studentId", "studentId");
+					occurrenceObjectStore.createIndex("activityId", "activityId");
+					console.log(`Created ${OCCURRENCE_OBJECT_STORE_NAME} store`);
+				}
+				else {
+					console.log("Object store already exists:", OCCURRENCE_OBJECT_STORE_NAME);
+				}
 
 				client = new this(database);
 				resolve(client);
-			};
-		});
-	}
-
-	getAllStudents() {
-		return new Promise((resolve, reject) => {
-			const transaction = this.#database.transaction([STUDENT_OBJECT_STORE_NAME], "readwrite");
-			const objectStore = transaction.objectStore(STUDENT_OBJECT_STORE_NAME);
-			const request = objectStore.getAll();
-			request.onsuccess = (_event) => resolve(request.result);
-			request.onerror = (event) => reject(event);
-		});
-	}
-
-	findStudentByName(studentName) {
-		return new Promise((resolve, reject) => {
-			const transaction = this.#database.transaction([STUDENT_OBJECT_STORE_NAME], "readwrite");
-			const objectStore = transaction.objectStore(STUDENT_OBJECT_STORE_NAME);
-			const index = objectStore.index("name")
-			const request = index.get(studentName);
-			request.onsuccess = (_event) => resolve(request.result);
-			request.onerror = (event) => reject(event);
-		});
-	}
-
-	findStudentById(studentId) {
-		return new Promise((resolve, reject) => {
-			const transaction = this.#database.transaction([STUDENT_OBJECT_STORE_NAME], "readwrite");
-			const objectStore = transaction.objectStore(STUDENT_OBJECT_STORE_NAME);
-			const request = objectStore.get(studentId);
-			request.onsuccess = (_event) => resolve(request.result);
-			request.onerror = (event) => reject(event);
-		});
-	}
-
-	addStudent(studentName, config) {
-		// Create the new empty student record
-		const record = { name: studentName, activities: [], occurrences: [], config };
-
-		return new Promise((resolve, reject) => {
-			const transaction = this.#database.transaction([STUDENT_OBJECT_STORE_NAME], "readwrite");
-			const objectStore = transaction.objectStore(STUDENT_OBJECT_STORE_NAME);
-			const request = objectStore.add(record);
-			request.onsuccess = (_event) => {
-				console.log(`Added student ${studentName}: `, request.result);
-				resolve(request.result);
-			};
-			request.onerror = (event) => {
-				console.error(`Unable to add student ${studentName} (likely because they already exist)`);
-				reject(event);
-			}
-		});
-	}
-
-	async deleteStudent(studentName) {
-		// Find the student first
-		const student = await this.findStudentByName(studentName);
-
-		return new Promise((resolve, reject) => {
-			const transaction = this.#database.transaction([STUDENT_OBJECT_STORE_NAME], "readwrite");
-			const objectStore = transaction.objectStore(STUDENT_OBJECT_STORE_NAME);
-			const request = objectStore.delete(student[objectStore.keyPath]);
-			request.onsuccess = (event) => {
-				console.log(`Deleted student: `, studentName);
-				resolve(event);
-			};
-			request.onerror = (event) => {
-				console.error(`Unable to delete student ${studentName}`);
-				reject(event);
-			}
-		});
-	}
-
-	async clearStudentActivities(studentId) {
-		const student = await this.findStudentById(studentId);
-		student.activities = [];
-		student.occurrences = [];
-		return new Promise((resolve, reject) => {
-			const transaction = this.#database.transaction([STUDENT_OBJECT_STORE_NAME], "readwrite");
-			const objectStore = transaction.objectStore(STUDENT_OBJECT_STORE_NAME);
-			const request = objectStore.put(student);
-			request.onsuccess = (_event) => {
-				console.log(`Cleared activities and occurrences for ${student.name}`);
-				resolve(request.result);
-			}
-			request.onerror = (event) => {
-				console.error(`Unable to clear activities and occurrences for ${student.name}`)
-				reject(event);
-			};
-		});
-	}
-
-	async addActivityToStudent(studentId, activityName) {
-		const student = await this.findStudentById(studentId);
-		student.activities.push(activityName);
-		return new Promise((resolve, reject) => {
-			const transaction = this.#database.transaction([STUDENT_OBJECT_STORE_NAME], "readwrite");
-			const objectStore = transaction.objectStore(STUDENT_OBJECT_STORE_NAME);
-			const request = objectStore.put(student);
-			request.onsuccess = (_event) => {
-				console.log(`Added activity to ${student.name}`);
-				resolve(request.result);
-			}
-			request.onerror = (event) => {
-				console.error(`Unable to add activity to ${student.name}`)
-				reject(event);
-			};
-		});
-	}
-
-	async recordStudentActivity(studentName, activityName) {
-		// Find the student first
-		const student = await this.findStudentByName(studentName);
-		// Create the timestamp record and push it to the student's record
-		const timestamp = Temporal.Now.zonedDateTimeISO();
-		const activityRecord = { name: activityName, time: timestamp.toLocaleString() }
-		student.occurrences.push(activityRecord);
-
-		return new Promise((resolve, reject) => {
-			const transaction = this.#database.transaction([STUDENT_OBJECT_STORE_NAME], "readwrite");
-			const objectStore = transaction.objectStore(STUDENT_OBJECT_STORE_NAME);
-			const request = objectStore.put(student);
-			request.onsuccess = (_event) => {
-				console.log(`Recorded activity occurrence for ${studentName}`);
-				resolve(request.result);
-			}
-			request.onerror = (event) => {
-				console.error(`Unable to record activity occurrence for ${studentName}`)
-				reject(event);
 			};
 		});
 	}
@@ -186,20 +116,19 @@ class DatabaseClient {
 			const request = objectStore.clear();
 
 			request.onsuccess = (event) => {
-				console.log("Store successfully cleared");
+				console.log(`Store ${storeName} successfully cleared`);
 				if (event.result != null) {
 					console.log("Something weird happened though:", event);
 				}
 				resolve(event);
 			}
 			request.onerror = (event) => {
-				console.error("Unable to clear store");
+				console.error(`Unable to clear store ${storeName}`);
 				console.log(event);
 				reject(event);
 			}
 		});
 	}
-
 	deleteDatabase() {
 		return new Promise((resolve, reject) => {
 			this.#database.close();
@@ -217,6 +146,256 @@ class DatabaseClient {
 	}
 }
 
+class Students {
+	#database;
+	#objectStoreName = STUDENT_OBJECT_STORE_NAME;
+
+	constructor(database) {
+		this.#database = database;
+	}
+
+	getAll() {
+		return new Promise((resolve, reject) => {
+			const transaction = this.#database.transaction([this.#objectStoreName], "readonly");
+			const objectStore = transaction.objectStore(this.#objectStoreName);
+			const request = objectStore.getAll();
+			request.onsuccess = (_event) => resolve(request.result);
+			request.onerror = (event) => reject(event);
+		});
+	}
+
+	findById(studentId) {
+		return new Promise((resolve, reject) => {
+			const transaction = this.#database.transaction([this.#objectStoreName], "readonly");
+			const objectStore = transaction.objectStore(this.#objectStoreName);
+			const request = objectStore.get(studentId);
+			request.onsuccess = (_event) => resolve(request.result);
+			request.onerror = (event) => reject(event);
+		});
+	}
+
+	findByName(studentName) {
+		return new Promise((resolve, reject) => {
+			const transaction = this.#database.transaction([this.#objectStoreName], "readonly");
+			const objectStore = transaction.objectStore(this.#objectStoreName);
+			const index = objectStore.index("name")
+			const request = index.get(studentName);
+			request.onsuccess = (_event) => resolve(request.result);
+			request.onerror = (event) => reject(event);
+		});
+	}
+
+	insert(record) {
+		if (record.id) {
+			delete record.id;
+		}
+		return new Promise((resolve, reject) => {
+			const transaction = this.#database.transaction([this.#objectStoreName], "readwrite");
+			const objectStore = transaction.objectStore(this.#objectStoreName);
+			const request = objectStore.add(record);
+			request.onsuccess = (_event) => {
+				console.log(`Added student ${record.name}: `, request.result);
+				resolve(request.result);
+			};
+			request.onerror = (event) => {
+				console.error(`Unable to add student ${record.name} (likely because they already exist)`);
+				reject(event);
+			}
+		});
+	}
+
+	delete(student) {
+		return new Promise((resolve, reject) => {
+			const transaction = this.#database.transaction([this.#objectStoreName], "readwrite");
+			const objectStore = transaction.objectStore(STUDENT_OBJECT_STORE_NAME);
+			const request = objectStore.delete(student[objectStore.keyPath]);
+			request.onsuccess = (event) => {
+				console.log(`Deleted student: `, student.name);
+				resolve(event);
+			};
+			request.onerror = (event) => {
+				console.error(`Unable to delete student ${student.name}`);
+				reject(event);
+			}
+		});
+	}
+
+	/**
+	 * @param {Student} student
+	 * @param {Activity} activity
+	 * @returns {Promise<Student>}
+	 */
+	trackActivity(student, activity) {
+		student.activities.push(activity.id);
+		return this.update(student);
+	}
+
+	/**
+	 * @param {Student} student
+	 * @param {Activity} activity
+	 * @returns {Promise<Student>}
+	 */
+	untrackActivity(student, activity) {
+		const idx = student.activities.findIndex((activityId) => activityId === activity.id);
+		student.activities.splice(idx, 1);
+		return this.update(student);
+	}
+
+	// This expects a fully formed student object
+	async update(record) {
+		return new Promise((resolve, reject) => {
+			const transaction = this.#database.transaction([this.#objectStoreName], "readwrite");
+			const objectStore = transaction.objectStore(this.#objectStoreName);
+			const request = objectStore.put(record);
+			request.onsuccess = (_event) => {
+				console.log(`Updated student ${record.name}`, request.result);
+				resolve(request.result);
+			}
+			request.onerror = (event) => {
+				console.error(`Unable to update student ${record.name}`)
+				reject(event);
+			};
+		});
+	}
+
+	/**
+	 * @returns {Student}
+	 */
+	static recordForInsert() {
+		return {
+			// NB: This field is required to not be present on insert
+			// id: undefined,
+			name: undefined,
+			activities: [],
+			config: {}
+		}
+	}
+}
+
+class Activities {
+	#database;
+	#objectStoreName = ACTIVITY_OBJECT_STORE_NAME;
+	constructor(database) {
+		this.#database = database;
+	}
+	getAll() {
+		return new Promise((resolve, reject) => {
+			const transaction = this.#database.transaction([this.#objectStoreName], "readwrite");
+			const objectStore = transaction.objectStore(this.#objectStoreName);
+			const request = objectStore.getAll();
+			request.onsuccess = (_event) => resolve(request.result);
+			request.onerror = (event) => reject(event);
+		});
+	}
+	/**
+	 * @returns {Promise<number>}
+	 */
+	insert(record) {
+		if (record.id) {
+			delete record.id;
+		}
+		return new Promise((resolve, reject) => {
+			const transaction = this.#database.transaction([this.#objectStoreName], "readwrite");
+			const objectStore = transaction.objectStore(this.#objectStoreName);
+			const request = objectStore.add(record);
+			request.onsuccess = (_event) => {
+				console.log(`Added activity ${record.name}: `, request.result);
+				resolve(request.result);
+			};
+			request.onerror = (event) => {
+				console.error(`Unable to add activity ${record.name}`);
+				reject(event);
+			}
+		});
+	}
+	/**
+	 * @returns {Activity}
+	 */
+	static recordForInsert() {
+		return {
+			name: undefined
+		}
+	}
+}
+
+class Occurrences {
+	#database;
+	#objectStoreName = OCCURRENCE_OBJECT_STORE_NAME;
+	constructor(database) {
+		this.#database = database;
+	}
+	getAll() {
+		return new Promise((resolve, reject) => {
+			const transaction = this.#database.transaction([this.#objectStoreName], "readonly");
+			const objectStore = transaction.objectStore(this.#objectStoreName);
+			const request = objectStore.getAll();
+			request.onsuccess = (_event) => resolve(request.result);
+			request.onerror = (event) => reject(event);
+		});
+	}
+	findByStudentId(student) {
+		return new Promise((resolve, reject) => {
+			const transaction = this.#database.transaction([this.#objectStoreName], "readonly");
+			const objectStore = transaction.objectStore(this.#objectStoreName);
+			const index = objectStore.index("studentId");
+			const request = index.getAll(student.id);
+			request.onsuccess = (_event) => resolve(request.result);
+			request.onerror = (event) => reject(event);
+		});
+	}
+
+	async removeByStudentId(student) {
+		const request = this.#getStudentCursorRequest(student);
+		return new Promise((resolve, reject) => {
+			request.onsuccess = (_event) => {
+				const cursor = request.result;
+				if (cursor) {
+					cursor.delete(cursor.primaryKey);
+					cursor.continue();
+				}
+				resolve(true);
+			};
+			request.onerror = (event) => reject(event);
+		});
+	}
+
+	#getStudentCursorRequest(student) {
+		const transaction = this.#database.transaction([this.#objectStoreName], "readwrite");
+		const objectStore = transaction.objectStore(this.#objectStoreName);
+		const index = objectStore.index("studentId");
+		const request = index.openCursor(IDBKeyRange.only(student.id));
+		return request;
+	}
+	/**
+	 * @returns {Promise<number>}
+	 */
+	insert(occurrence) {
+		return new Promise((resolve, reject) => {
+			const transaction = this.#database.transaction([this.#objectStoreName], "readwrite");
+			const objectStore = transaction.objectStore(this.#objectStoreName);
+			const request = objectStore.add(occurrence);
+			request.onsuccess = (_event) => {
+				console.log(`Added occurrence ${occurrence.timestamp}: `, request.result);
+				resolve(request.result);
+			};
+			request.onerror = (event) => {
+				console.error(`Unable to add occurrence ${occurrence.timestamp}`);
+				reject(event);
+			}
+		});
+	}
+	/**
+	 * @returns {Occurrence}
+	 */
+	static recordForInsert() {
+		return {
+			activityId: undefined,
+			studentId: undefined,
+			timestamp: undefined,
+		}
+	}
+}
+
 // Utility functions
 const randomId = (name) => {
 	let result = `${name.toLowerCase()}-`;
@@ -230,15 +409,19 @@ const randomId = (name) => {
 window.addEventListener("DOMContentLoaded", async () => {
 	// Initialize the database client
 	const client = await DatabaseClient.init();
-
+	let permission = false;
 	// Request notification permission
-	const permission = await Notification.requestPermission();
+	try {
+		permission = await Notification.requestPermission();
+	}
+	catch (e) {
+		console.log("Could not get notification permisson, likely because we are on mobile")
+	}
 	console.log("Notification permission", permission);
-
 	// Containers and buttons
-	const clearStudentsStoreButton = document.getElementById(`clear-${STUDENT_OBJECT_STORE_NAME}-store`);
-	const clearActivitiesButton = document.getElementById("clear-activities");
-	const deleteDatabaseButton = document.getElementById("delete-database")
+	// const clearStudentsStoreButton = document.getElementById(`clear-${STUDENT_OBJECT_STORE_NAME}-store`);
+	// const clearActivitiesButton = document.getElementById(`clear-${ACTIVITY_OBJECT_STORE_NAME}-store`);
+	const deleteDatabaseButton = document.getElementById("delete-database");
 	const studentsContainer = document.getElementById("students");
 	const addStudentForm = document.getElementById("add-student");
 	const toggleResultsButton = document.getElementById("toggle-results")
@@ -247,28 +430,31 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 	// Event listeners
 	console.log(`Creating global event listeners for ${STUDENT_OBJECT_STORE_NAME} store`);
-	clearStudentsStoreButton.addEventListener("click", (event) => {
-		event.preventDefault();
-		event.stopPropagation();
-		client.clearStore(STUDENT_OBJECT_STORE_NAME);
-		const studentsContainer = document.getElementById("students");
-		studentsContainer.replaceChildren();
-	});
+	// clearStudentsStoreButton.addEventListener("click", (event) => {
+	// 	event.preventDefault();
+	// 	event.stopPropagation();
+	// 	client.clearStore(STUDENT_OBJECT_STORE_NAME);
+	// 	const studentsContainer = document.getElementById("students");
+	// 	studentsContainer.replaceChildren();
+	// });
 
-	clearActivitiesButton.addEventListener("click", async (event) => {
-		event.preventDefault();
-		event.stopPropagation();
-		const students = await client.getAllStudents(); {
-			for (const student of students) {
-				await client.clearStudentActivities(student.id);
-			}
-		}
-		const studentsContainer = document.getElementById("students");
-		const activitiesContainers = studentsContainer.getElementsByClassName("student-activities");
-		for (const element of activitiesContainers) {
-			element.replaceChildren();
-		}
-	});
+	// clearActivitiesButton.addEventListener("click", async (event) => {
+	// 	event.preventDefault();
+	// 	event.stopPropagation();
+	// 	const students = await client.students.getAll(); {
+	// 		for (const student of students) {
+	// 			await client.clearStudentActivities(student.id);
+	// 		}
+	// 	}
+	// 	const studentsContainer = document.getElementById("students");
+	// 	const activitiesContainers = studentsContainer.getElementsByClassName("student-activities");
+	// 	for (const element of activitiesContainers) {
+	// 		element.replaceChildren();
+	// 	}
+	// 	if (toggleResultsButton.dataset.toggle === "open") {
+	// 		createResults();
+	// 	}
+	// });
 
 	deleteDatabaseButton.addEventListener("click", (event) => {
 		event.preventDefault();
@@ -298,13 +484,14 @@ window.addEventListener("DOMContentLoaded", async () => {
 			const formData = new FormData(form);
 			const studentName = formData.get("student-name");
 			const studentColor = formData.get("student-color");
-			const id = await client.addStudent(studentName, { color: studentColor });
+			const student = Students.recordForInsert();
+			student.name = studentName;
+			student.config.color = studentColor;
+			student.id = await client.students.insert(student);
 			if (permission === "granted") {
 				new Notification("Student added", { body: `Successfully added student ${studentName}` });
 			}
-			const student = await client.findStudentById(id);
 			const studentElement = createStudentElement(student);
-
 			studentsContainer.appendChild(studentElement);
 			addStudentForm.reset();
 		}
@@ -317,11 +504,14 @@ window.addEventListener("DOMContentLoaded", async () => {
 	exportResultsButton.addEventListener("click", async (event) => {
 		event.preventDefault();
 		event.stopPropagation();
-		const students = await client.getAllStudents();
+		const students = await client.students.getAll();
+		const activities = await client.activities.getAll();
 		let csv = ["Student name,Activity name,Timestamp"];
 		for (const student of students) {
-			for (const { name: activityName, time: activityTimestamp } of student.occurrences) {
-				const row = `${student.name},${activityName},${activityTimestamp}`;
+			const occurrences = await client.occurrences.findByStudentId(student.id);
+			for (const occurrence of occurrences) {
+				const activity = activities.find((activity) => activity.id === occurrence.activityId);
+				const row = `${student.name},${activity.name},"${occurrence.timestamp}"`;
 				csv.push(row);
 			}
 		}
@@ -337,36 +527,27 @@ window.addEventListener("DOMContentLoaded", async () => {
 	});
 
 	const createStudentElement = (student) => {
-		// Extract the student variables
-		const { name: studentName, id, config } = student;
 		// Get the student template
 		const template = document.getElementById("student");
-		const studentElement = document.importNode(template.content, true);
-		const studentForm = studentElement.getElementById("{buttonId}");
+		const element = document.importNode(template.content, true);
+		const studentForm = element.querySelector(".student-activity-form");
 
 		// Set the container id
-		const container = studentElement.firstElementChild;
-		container.id = `student-${id}`;
+		const container = element.querySelector(".student");
+		container.id = `student-${student.id}`;
 
 		// Set the background color
 		if (student.config?.color) {
 			container.style.backgroundColor = student.config.color;
 		}
 
-		// studentElement.
+		// Set the student name
+		const studentNameHeader = element.querySelector(".student-name");
+		studentNameHeader.textContent = student.name;
 
-		// Set the button name
-		const studentNameHeader = studentElement.getElementById("{name}-header")
-		studentNameHeader.id = `student-${id}-header`;
-
-		studentNameHeader.textContent = studentName;
-
-		// Set the form ID
-		studentForm.id = `student-${id}-activities`;
-
-		// Set the submit button ID and value
-		const studentFormSubmitButton = studentElement.querySelector(`input[type="submit"]`);
-		studentFormSubmitButton.value = `Add activity for ${studentName} `;
+		// Set the submit button value
+		const studentFormSubmitButton = element.querySelector(`input[type="submit"]`);
+		studentFormSubmitButton.value = `Add activity for ${student.name} `;
 
 		// Get activity template
 		studentForm.addEventListener("submit", async (event) => {
@@ -375,71 +556,101 @@ window.addEventListener("DOMContentLoaded", async () => {
 			const form = event.target;
 			const formData = new FormData(form);
 			const activityName = formData.get("activity-name");
-			await client.addActivityToStudent(student.id, activityName);
+			const activity = Activities.recordForInsert();
+			activity.name = activityName;
+			activity.id = await client.activities.insert(activity);
+			console.log(activity);
+			await client.students.trackActivity(student, activity);
 			const studentContainer = document.getElementById(container.id);
 			const activitiesContainer = studentContainer.querySelector(".student-activities");
-			const activityElement = createActivityElement(student, activityName);
+			const activityElement = createActivityElement(student, activity);
 			activitiesContainer.appendChild(activityElement);
+			studentForm.reset();
 		});
 
 		const deleteStudentButton = container.querySelector(".delete-student");
 		deleteStudentButton.addEventListener("click", async (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			if (confirm(`Are you sure you want to delete ${studentName}?`)) {
-				await client.deleteStudent(studentName);
-				const container = document.getElementById(`student-${id}`);
+			if (confirm(`Are you sure you want to delete ${student.name}?`)) {
+				await client.students.delete(student);
 				container.remove();
 				if (permission === "granted") {
-					new Notification("Student deleted", { body: `Deleted ${studentName}` });
+					new Notification("Student deleted", { body: `Deleted ${student.name}` });
 				}
-				if (toggleResultsButton.dataset.toggle = "open") {
+				if (toggleResultsButton.dataset.toggle === "open") {
 					createResults();
 				}
 			}
 		});
 
-		return studentElement;
+		return element;
 	};
 
-	const createActivityElement = (student, activityName) => {
+	const createActivityElement = (student, activity) => {
 		const template = document.getElementById("activity");
-		const activityElement = document.importNode(template.content, true);
+		const element = document.importNode(template.content, true);
+		const container = element.querySelector(".activity-buttons");
+		const id = `activity-${activity.id}`;
+		container.id = id;
 
-		// Set and store the activity ID
-		const id = randomId(activityName);
-
-		// Get the activity template
-		// Set the button ID and text
-		const button = activityElement.getElementById("{activity-name}");
-		button.id = id;
-		button.textContent = `Record activity: ${activityName}`;
-		button.addEventListener("click", async () => {
-			await client.recordStudentActivity(student.name, activityName);
+		const activityNameElement = element.querySelector(".activity-name");
+		activityNameElement.textContent = activity.name;
+		const recordActivityButton = element.querySelector(".record-occurrence-button");
+		recordActivityButton.addEventListener("click", async () => {
+			const occurrence = Occurrences.recordForInsert();
+			occurrence.activityId = activity.id;
+			occurrence.studentId = student.id;
+			occurrence.timestamp = Temporal.Now.instant().toLocaleString();
+			occurrence.id = await client.occurrences.insert(occurrence);
 			if (permission === "granted") {
-				new Notification("Activity recorded", { body: `Recorded ${activityName} occurrence for ${student.name}` });
+				new Notification("Occurrence recorded", { body: `Recorded ${activity.name} occurrence for ${student.name}` });
 			}
-			if (toggleResultsButton.dataset.toggle = "open") {
+			if (toggleResultsButton.dataset.toggle === "open") {
 				createResults();
 			}
 		});
-		return activityElement;
+
+		const removeOccurrencesButton = element.querySelector(".remove-occurrence-button");
+		removeOccurrencesButton.addEventListener("click", async () => {
+			await client.occurrences.removeByStudentId(student);
+			if (permission === "granted") {
+				new Notification("Occurrences removed", { body: `Removed ${activity.name} occurrences for ${student.name}` });
+			}
+			if (toggleResultsButton.dataset.toggle === "open") {
+				createResults();
+			}
+		});
+
+		const untrackActivityButton = element.querySelector(".untrack-activity-button");
+		untrackActivityButton.addEventListener("click", async () => {
+			await client.students.untrackActivity(student, activity);
+			if (permission === "granted") {
+				new Notification("Occurrence tracking removed", { body: `No longer tracking ${activity.name} occurrences for ${student.name}` });
+			}
+			container.remove();
+		});
+
+		return element;
 	};
 
 	const createResults = async () => {
 		toggleResultsButton.dataset.toggle = "open";
 		toggleResultsButton.textContent = "Hide Activities"
-		const students = await client.getAllStudents();
+		const students = await client.students.getAll();
+		const activities = await client.activities.getAll();
 		const resultsTemplate = document.getElementById("activities");
 		const resultsElement = document.importNode(resultsTemplate.content, true);
 		const recordsContainer = resultsElement.querySelector(".records");
 		const recordTemplate = document.getElementById("record");
 		for (const student of students) {
-			for (const occurrence of student.occurrences) {
+			const occurrences = await client.occurrences.findByStudentId(student);
+			for (const occurrence of occurrences) {
+				const activity = activities.find((activity) => occurrence.activityId === activity.id);
 				const recordElement = document.importNode(recordTemplate.content, true);
 				recordElement.querySelector(".name").textContent = student.name;
-				recordElement.querySelector(".activity").textContent = occurrence.name;
-				recordElement.querySelector(".timestamp").textContent = occurrence.time;
+				recordElement.querySelector(".activity").textContent = activity.name;
+				recordElement.querySelector(".timestamp").textContent = occurrence.timestamp;
 				recordsContainer.appendChild(recordElement);
 			}
 		}
@@ -447,15 +658,17 @@ window.addEventListener("DOMContentLoaded", async () => {
 	}
 
 	try {
-		const students = await client.getAllStudents();
+		const students = await client.students.getAll();
+		const activities = await client.activities.getAll();
 		for (const student of students) {
 			const studentElement = createStudentElement(student);
 			studentsContainer.appendChild(studentElement);
 			if (student.activities?.length > 0) {
 				const studentContainer = document.getElementById(`student-${student.id}`);
 				const activitiesContainer = studentContainer.querySelector(".student-activities");
-				for (const activityName of student.activities) {
-					const activityElement = createActivityElement(student, activityName);
+				for (const activityId of student.activities) {
+					const activity = activities.find((activity) => activity.id === activityId);
+					const activityElement = createActivityElement(student, activity);
 					activitiesContainer.appendChild(activityElement);
 				}
 			}

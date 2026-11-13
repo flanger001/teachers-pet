@@ -93,6 +93,23 @@ h6 {
     gap: 20px;
 }
 
+.activity-buttons {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    padding: 10px 20px 20px 0px;
+    .button {
+        padding-left: 3px;
+        padding-right: 3px;
+        font-size: 0.75rem;
+    }
+}
+
+.activity-name {
+    grid-column-start: 1;
+    grid-column-end: 3;
+}
+
 .activities-table {
     table-layout: fixed;
     width: 90%;
