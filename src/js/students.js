@@ -89,7 +89,9 @@ export class Students {
 	 * @returns {Promise<Student>}
 	 */
 	trackActivity(student, activity) {
-		student.activities.push(activity.id);
+		if (!student.activities.includes(activity.id)) {
+			student.activities.push(activity.id);
+		}
 		return this.update(student);
 	}
 	/**

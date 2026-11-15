@@ -141,12 +141,28 @@ const initializeApp = async () => {
 			}
 			const option = document.createElement("option");
 			option.value = activity.name;
-			activitiesDatalist.appendChild(option);
-			await client.students.trackActivity(student, activity);
-			const studentContainer = document.getElementById(container.id);
-			const activitiesContainer = studentContainer.querySelector(".student-activities");
-			const activityElement = createActivityElement(student, activity);
-			activitiesContainer.appendChild(activityElement);
+			let found = false;
+			for (const el of activitiesDatalist.children) {
+				if (option.isEqualNode(el)) {
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				activitiesDatalist.appendChild(option);
+			}
+			if (!student.activities.includes(activity.id)) {
+				await client.students.trackActivity(student, activity);
+				const studentContainer = document.getElementById(container.id);
+				const activitiesContainer = studentContainer.querySelector(".student-activities");
+				const activityElement = createActivityElement(student, activity);
+				activitiesContainer.appendChild(activityElement);
+			}
+			else {
+				if (permission === "granted") {
+					new Notification("Activity already tracked", { body: `Activity ${activity.name} already tracked for ${student.name}` });
+				}
+			}
 			studentForm.reset();
 		});
 
