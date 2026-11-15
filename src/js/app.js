@@ -79,12 +79,12 @@ const initializeApp = async () => {
 		event.stopPropagation();
 		const students = await client.students.getAll();
 		const activities = await client.activities.getAll();
-		let csv = ["Student name,Activity name,Timestamp"];
+		let csv = ["Occurrence ID,Student ID,Student name,Activity ID,Activity name,Timestamp"];
 		for (const student of students) {
 			const occurrences = await client.occurrences.findByStudentId(student.id);
 			for (const occurrence of occurrences) {
 				const activity = activities.find((activity) => activity.id === occurrence.activityId);
-				const row = `${student.name},${activity.name},"${occurrence.timestamp}"`;
+				const row = `${occurrence.id},${student.id},${student.name},${activity.id},${activity.name},"${occurrence.timestamp}"`;
 				csv.push(row);
 			}
 		}
