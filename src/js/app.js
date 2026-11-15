@@ -195,6 +195,9 @@ const initializeApp = async () => {
 
 		const removeOccurrencesButton = element.querySelector(".remove-occurrence-button");
 		removeOccurrencesButton.addEventListener("click", async () => {
+			if (!confirm(`Remove all occurrences of ${activity.name} for ${student.name}?`)) {
+				return;
+			}
 			await client.occurrences.removeByStudentId(student);
 			if (permission === "granted") {
 				new Notification("Occurrences removed", { body: `Removed ${activity.name} occurrences for ${student.name}` });
@@ -206,6 +209,9 @@ const initializeApp = async () => {
 
 		const untrackActivityButton = element.querySelector(".untrack-activity-button");
 		untrackActivityButton.addEventListener("click", async () => {
+			if (!confirm(`Stop tracking ${activity.name} for ${student.name}?`)) {
+				return;
+			}
 			await client.students.untrackActivity(student, activity);
 			if (permission === "granted") {
 				new Notification("Occurrence tracking removed", { body: `No longer tracking ${activity.name} occurrences for ${student.name}` });
