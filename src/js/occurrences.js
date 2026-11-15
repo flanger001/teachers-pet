@@ -34,7 +34,7 @@ export class Occurrences {
 			request.onerror = (event) => reject(event);
 		});
 	}
-	async removeByStudentId(student) {
+	removeByStudentId(student) {
 		const request = this.#getStudentCursorRequest(student);
 		return new Promise((resolve, reject) => {
 			request.onsuccess = (_event) => {

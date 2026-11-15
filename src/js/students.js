@@ -22,7 +22,6 @@ export class Students {
 	constructor(database) {
 		this.#database = database;
 	}
-
 	getAll() {
 		return new Promise((resolve, reject) => {
 			const transaction = this.#database.transaction([this.#objectStoreName], "readonly");
