@@ -34,7 +34,6 @@ export class Occurrences {
 			request.onerror = (event) => reject(event);
 		});
 	}
-
 	async removeByStudentId(student) {
 		const request = this.#getStudentCursorRequest(student);
 		return new Promise((resolve, reject) => {
@@ -49,7 +48,6 @@ export class Occurrences {
 			request.onerror = (event) => reject(event);
 		});
 	}
-
 	#getStudentCursorRequest(student) {
 		const transaction = this.#database.transaction([this.#objectStoreName], "readwrite");
 		const objectStore = transaction.objectStore(this.#objectStoreName);

@@ -21,6 +21,25 @@ export class Activities {
 			request.onerror = (event) => reject(event);
 		});
 	}
+	findById(id) {
+		return new Promise((resolve, reject) => {
+			const transaction = this.#database.transaction([this.#objectStoreName], "readonly");
+			const objectStore = transaction.objectStore(this.#objectStoreName);
+			const request = objectStore.get(id);
+			request.onsuccess = (_event) => resolve(request.result);
+			request.onerror = (event) => reject(event);
+		});
+	}
+	findByName(id) {
+		return new Promise((resolve, reject) => {
+			const transaction = this.#database.transaction([this.#objectStoreName], "readonly");
+			const objectStore = transaction.objectStore(this.#objectStoreName);
+			const index = objectStore.index("name");
+			const request = index.get(id);
+			request.onsuccess = (_event) => resolve(request.result);
+			request.onerror = (event) => reject(event);
+		});
+	}
 	/**
 	 * @returns {Promise<number>}
 	 */
@@ -37,7 +56,7 @@ export class Activities {
 				resolve(request.result);
 			};
 			request.onerror = (event) => {
-				console.error(`Unable to add activity ${record.name}`);
+				console.log(`Activity ${record.name} already exists`);
 				reject(event);
 			};
 		});

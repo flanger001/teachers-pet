@@ -32,28 +32,25 @@ export class Students {
 			request.onerror = (event) => reject(event);
 		});
 	}
-
-	findById(studentId) {
+	findById(id) {
 		return new Promise((resolve, reject) => {
 			const transaction = this.#database.transaction([this.#objectStoreName], "readonly");
 			const objectStore = transaction.objectStore(this.#objectStoreName);
-			const request = objectStore.get(studentId);
+			const request = objectStore.get(id);
 			request.onsuccess = (_event) => resolve(request.result);
 			request.onerror = (event) => reject(event);
 		});
 	}
-
-	findByName(studentName) {
+	findByName(id) {
 		return new Promise((resolve, reject) => {
 			const transaction = this.#database.transaction([this.#objectStoreName], "readonly");
 			const objectStore = transaction.objectStore(this.#objectStoreName);
 			const index = objectStore.index("name");
-			const request = index.get(studentName);
+			const request = index.get(id);
 			request.onsuccess = (_event) => resolve(request.result);
 			request.onerror = (event) => reject(event);
 		});
 	}
-
 	insert(record) {
 		if (record.id) {
 			delete record.id;
@@ -72,7 +69,6 @@ export class Students {
 			};
 		});
 	}
-
 	delete(student) {
 		return new Promise((resolve, reject) => {
 			const transaction = this.#database.transaction([this.#objectStoreName], "readwrite");
@@ -88,7 +84,6 @@ export class Students {
 			};
 		});
 	}
-
 	/**
 	 * @param {Student} student
 	 * @param {Activity} activity
@@ -98,7 +93,6 @@ export class Students {
 		student.activities.push(activity.id);
 		return this.update(student);
 	}
-
 	/**
 	 * @param {Student} student
 	 * @param {Activity} activity
@@ -109,7 +103,6 @@ export class Students {
 		student.activities.splice(idx, 1);
 		return this.update(student);
 	}
-
 	// This expects a fully formed student object
 	async update(record) {
 		return new Promise((resolve, reject) => {
@@ -126,7 +119,6 @@ export class Students {
 			};
 		});
 	}
-
 	/**
 	 * @returns {Student}
 	 */

@@ -58,7 +58,7 @@
 				<form class="form student-activity-form">
 					<div class="form-control">
 						<label class="label" for="activity">New activity name</label>
-						<input class="input-text" type="text" name="activity-name" required />
+						<input class="input-text" type="text" name="activity-name" list="activities-datalist" required />
 					</div>
 					<div class="form-control">
 						<input class="input-submit button" type="submit" />
@@ -74,8 +74,8 @@
 		<template id="activity">
 			<div class="activity-buttons">
 				<p class="activity-name"></p>
-				<button class="button record-occurrence-button">Record occurence</button>
-				<button class="button remove-occurrence-button">Remove occurences</button>
+				<button class="button record-occurrence-button">Record occurrence</button>
+				<button class="button remove-occurrence-button">Remove occurrences</button>
 				<button class="button untrack-activity-button">Stop tracking</button>
 			</div>
 		</template>
@@ -104,7 +104,8 @@
 		</template>
 	</main>
 	<footer>
-		<p>All data is stored locally. You can download it with the "Export Activites" button.</p>
+		<p>All data is stored locally. You can download it with the "Export Activities" button.</p>
 	</footer>
+	<datalist id="activities-datalist"></datalist>
 </body>
 </html>

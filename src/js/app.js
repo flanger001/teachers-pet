@@ -23,7 +23,7 @@ const initializeApp = async () => {
 	const toggleResultsButton = document.getElementById("toggle-results");
 	const resultsContainer = document.getElementById("results");
 	const exportResultsButton = document.getElementById("export-results");
-
+	const activitiesDatalist = document.getElementById("activities-datalist");
 	// Event listeners
 	console.log(`Creating global event listeners`);
 
@@ -120,7 +120,7 @@ const initializeApp = async () => {
 
 		// Set the submit button value
 		const studentFormSubmitButton = element.querySelector(`input[type="submit"]`);
-		studentFormSubmitButton.value = `Add activity for ${student.name} `;
+		studentFormSubmitButton.value = `Add activity for ${student.name}`;
 
 		// Get activity template
 		studentForm.addEventListener("submit", async (event) => {
@@ -129,10 +129,19 @@ const initializeApp = async () => {
 			const form = event.target;
 			const formData = new FormData(form);
 			const activityName = formData.get("activity-name");
-			const activity = Activities.recordForInsert();
-			activity.name = activityName;
-			activity.id = await client.activities.insert(activity);
-			console.log(activity);
+			let activity;
+			try {
+				activity = Activities.recordForInsert();
+				activity.name = activityName;
+				activity.id = await client.activities.insert(activity);
+			}
+			catch (e) {
+				// Activity already exists
+				activity = await client.activities.findByName(activityName);
+			}
+			const option = document.createElement("option");
+			option.value = activity.name;
+			activitiesDatalist.appendChild(option);
 			await client.students.trackActivity(student, activity);
 			const studentContainer = document.getElementById(container.id);
 			const activitiesContainer = studentContainer.querySelector(".student-activities");
@@ -246,6 +255,12 @@ const initializeApp = async () => {
 				}
 			}
 		}
+		for (const activity of activities) {
+			const option = document.createElement("option");
+			option.value = activity.name;
+			activitiesDatalist.appendChild(option);
+		}
+
 	}
 	catch (error) {
 		// Database not initialized, therefore there is no data to render.
