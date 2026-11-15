@@ -266,15 +266,14 @@ const initializeApp = async () => {
 			option.value = activity.name;
 			activitiesDatalist.appendChild(option);
 		}
-
+		if (localStorage.getItem("toggle-state") === "open") {
+			toggleResultsButton.click();
+		}
 	}
 	catch (error) {
 		// Database not initialized, therefore there is no data to render.
 		// This is not a proper error, so we are swallowing the "error".
 		// console.log(error);
-	}
-	if (localStorage.getItem("toggle-state") === "open") {
-		toggleResultsButton.click();
 	}
 };
 
