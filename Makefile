@@ -2,7 +2,7 @@ zip:
 	zip -r site-v`cat version`.zip src
 
 tag:
-	git tag -a v`cat version` -m "`git log --format=%B -n 1`"
+	COMMIT_COUNT=$$(git rev-list origin/main..main --count) && git tag -a v`cat version` -m "`git log --format=%B -n $$COMMIT_COUNT`"
 	git push origin main
 
 sync:
@@ -12,3 +12,4 @@ sync:
 deploy: zip tag sync
 	gh release create v`cat version` --notes-from-tag
 	gh release upload v`cat version` site-v`cat version`.zip
+	rm site-v`cat version`.zip
