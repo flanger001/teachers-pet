@@ -13,12 +13,10 @@ import { Database } from "./database.js";
  * @type {object}
  * @property {string} color
  */
-
 export class Students extends Database {
 	constructor(database, objectStoreName) {
 		super(database, objectStoreName);
 	}
-
 	/**
 	 * @param {Student} student
 	 * @param {Activity} activity

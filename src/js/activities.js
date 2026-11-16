@@ -6,12 +6,10 @@ import { Database } from "./database.js";
  * @property {number} [id]
  * @property {string} name
  */
-
 export class Activities extends Database {
 	constructor(database, objectStoreName) {
 		super(database, objectStoreName);
 	}
-
 	/**
 	 * @returns {Activity}
 	 */

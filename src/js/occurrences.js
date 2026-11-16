@@ -8,12 +8,10 @@ import { Database } from "./database.js";
  * @property {number} studentId
  * @property {string} timestamp
  */
-
 export class Occurrences extends Database {
 	constructor(database, objectStoreName) {
 		super(database, objectStoreName);
 	}
-
 	findByStudentId(student) {
 		return new Promise((resolve, reject) => {
 			const transaction = this.database.transaction([this.objectStoreName], "readonly");
