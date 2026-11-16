@@ -1,4 +1,4 @@
-import { STUDENT_OBJECT_STORE_NAME } from "./database-client.js"
+import { Database } from "./database.js";
 
 /**
  * @typedef Student
@@ -8,81 +8,17 @@ import { STUDENT_OBJECT_STORE_NAME } from "./database-client.js"
  * @property {StudentConfig} config
  * @property {number[]} activities
  */
-
 /**
  * @typedef StudentConfig
  * @type {object}
  * @property {string} color
  */
 
-export class Students {
-	#database;
-	#objectStoreName = STUDENT_OBJECT_STORE_NAME;
+export class Students extends Database {
+	constructor(database, objectStoreName) {
+		super(database, objectStoreName);
+	}
 
-	constructor(database) {
-		this.#database = database;
-	}
-	getAll() {
-		return new Promise((resolve, reject) => {
-			const transaction = this.#database.transaction([this.#objectStoreName], "readonly");
-			const objectStore = transaction.objectStore(this.#objectStoreName);
-			const request = objectStore.getAll();
-			request.onsuccess = (_event) => resolve(request.result);
-			request.onerror = (event) => reject(event);
-		});
-	}
-	findById(id) {
-		return new Promise((resolve, reject) => {
-			const transaction = this.#database.transaction([this.#objectStoreName], "readonly");
-			const objectStore = transaction.objectStore(this.#objectStoreName);
-			const request = objectStore.get(id);
-			request.onsuccess = (_event) => resolve(request.result);
-			request.onerror = (event) => reject(event);
-		});
-	}
-	findByName(id) {
-		return new Promise((resolve, reject) => {
-			const transaction = this.#database.transaction([this.#objectStoreName], "readonly");
-			const objectStore = transaction.objectStore(this.#objectStoreName);
-			const index = objectStore.index("name");
-			const request = index.get(id);
-			request.onsuccess = (_event) => resolve(request.result);
-			request.onerror = (event) => reject(event);
-		});
-	}
-	insert(record) {
-		if (record.id) {
-			delete record.id;
-		}
-		return new Promise((resolve, reject) => {
-			const transaction = this.#database.transaction([this.#objectStoreName], "readwrite");
-			const objectStore = transaction.objectStore(this.#objectStoreName);
-			const request = objectStore.add(record);
-			request.onsuccess = (_event) => {
-				console.log(`Added student ${record.name}: `, request.result);
-				resolve(request.result);
-			};
-			request.onerror = (event) => {
-				console.error(`Unable to add student ${record.name} (likely because they already exist)`);
-				reject(event);
-			};
-		});
-	}
-	delete(student) {
-		return new Promise((resolve, reject) => {
-			const transaction = this.#database.transaction([this.#objectStoreName], "readwrite");
-			const objectStore = transaction.objectStore(STUDENT_OBJECT_STORE_NAME);
-			const request = objectStore.delete(student[objectStore.keyPath]);
-			request.onsuccess = (event) => {
-				console.log(`Deleted student: `, student.name);
-				resolve(event);
-			};
-			request.onerror = (event) => {
-				console.error(`Unable to delete student ${student.name}`);
-				reject(event);
-			};
-		});
-	}
 	/**
 	 * @param {Student} student
 	 * @param {Activity} activity
@@ -103,22 +39,6 @@ export class Students {
 		const idx = student.activities.findIndex((activityId) => activityId === activity.id);
 		student.activities.splice(idx, 1);
 		return this.update(student);
-	}
-	// This expects a fully formed student object
-	async update(record) {
-		return new Promise((resolve, reject) => {
-			const transaction = this.#database.transaction([this.#objectStoreName], "readwrite");
-			const objectStore = transaction.objectStore(this.#objectStoreName);
-			const request = objectStore.put(record);
-			request.onsuccess = (_event) => {
-				console.log(`Updated student ${record.name}`, request.result);
-				resolve(request.result);
-			};
-			request.onerror = (event) => {
-				console.error(`Unable to update student ${record.name}`);
-				reject(event);
-			};
-		});
 	}
 	/**
 	 * @returns {Student}

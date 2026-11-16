@@ -1,12 +1,12 @@
+import { initializeDatabaseClient } from "./client.js";
 import { Activities } from "./activities.js";
-import { DatabaseClient } from "./database-client.js";
-import { Students } from "./students.js";
 import { Occurrences } from "./occurrences.js";
+import { Students } from "./students.js";
 
 // Set up the app
 const initializeApp = async () => {
 	// Initialize the database client
-	const client = await DatabaseClient.init();
+	const client = await initializeDatabaseClient();
 	let permission = false;
 	// Request notification permission
 	try {
