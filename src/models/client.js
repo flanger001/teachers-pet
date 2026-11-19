@@ -1,6 +1,6 @@
-import { Activities } from "./activities.js";
-import { Occurrences } from "./occurrences.js";
-import { Students } from "./students.js";
+import { Activities } from "./activities";
+import { Occurrences } from "./occurrences";
+import { Students } from "./students";
 
 export const DATABASE_VERSION = 3;
 export const DATABASE_NAME = "students";
@@ -77,7 +77,6 @@ export const initializeDatabaseClient = () => {
 					occurrenceObjectStore.createIndex("studentId", "studentId");
 					occurrenceObjectStore.createIndex("activityId", "activityId");
 					console.log(`Created ${OCCURRENCE_OBJECT_STORE_NAME} store`);
-					break;
 				}
 				case event.oldVersion < 3: {
 					// Activities migration
@@ -124,7 +123,6 @@ export const initializeDatabaseClient = () => {
 										}
 									}
 									activityObjectStore.delete(activity[activityObjectStore.keyPath]);
-
 								}
 								activityObjectStore.deleteIndex("name");
 								activityObjectStore.createIndex("name", "name", { unique: true });
