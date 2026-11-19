@@ -134,9 +134,6 @@ export const initializeDatabaseClient = () => {
 				}
 				default: break;
 			}
-
-			client = new Client(database);
-			resolve(client);
 		};
 	});
 }
