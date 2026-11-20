@@ -9,6 +9,15 @@ const DatabaseContext = createContext(null);
 const StudentsContext = createContext(null);
 const ActivitiesContext = createContext(null);
 const OccurrencesContext = createContext(null);
+const formatter = new Intl.DateTimeFormat("en-us", {
+	year: "numeric",
+	month: "2-digit",
+	day: "2-digit",
+	hour: "2-digit",
+	minute: "2-digit",
+	second: "2-digit",
+	hourCycle: "h12"
+});
 
 function DatabaseProvider({ children, client, students, setStudents, activities, setActivities, occurrences, setOccurrences }) {
 	return (
@@ -374,7 +383,7 @@ function Activity({ student, activity }) {
 		const occurrence = Occurrences.recordForInsert();
 		occurrence.activityId = activity.id;
 		occurrence.studentId = student.id;
-		occurrence.timestamp = Temporal.Now.instant().toLocaleString();
+		occurrence.timestamp = formatter.format(new Date())
 		occurrence.id = await client.occurrences.insert(occurrence);
 		setOccurrences((occurrences) => [occurrence, ...occurrences]);
 		if (Navigation.permission === "granted") {
