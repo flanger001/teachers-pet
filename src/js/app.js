@@ -3,6 +3,16 @@ import { Activities } from "./activities.js";
 import { Occurrences } from "./occurrences.js";
 import { Students } from "./students.js";
 
+const formatter = new Intl.DateTimeFormat("en-us", {
+	year: "numeric",
+	month: "2-digit",
+	day: "2-digit",
+	hour: "2-digit",
+	minute: "2-digit",
+	second: "2-digit",
+	hourCycle: "h12"
+});
+
 // Set up the app
 const initializeApp = async () => {
 	// Initialize the database client
@@ -200,7 +210,7 @@ const initializeApp = async () => {
 			const occurrence = Occurrences.recordForInsert();
 			occurrence.activityId = activity.id;
 			occurrence.studentId = student.id;
-			occurrence.timestamp = Temporal.Now.instant().toLocaleString();
+			occurrence.timestamp = formatter.format(new Date());
 			occurrence.id = await client.occurrences.insert(occurrence);
 			if (permission === "granted") {
 				new Notification("Occurrence recorded", { body: `Recorded ${activity.name} occurrence for ${student.name}` });
