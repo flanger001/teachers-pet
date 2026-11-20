@@ -172,6 +172,7 @@ const initializeApp = async () => {
 			event.stopPropagation();
 			if (confirm(`Are you sure you want to delete ${student.name}?`)) {
 				await client.students.delete(student);
+				await client.occurrences.removeByStudentId(student);
 				container.remove();
 				if (permission === "granted") {
 					new Notification("Student deleted", { body: `Deleted ${student.name}` });
