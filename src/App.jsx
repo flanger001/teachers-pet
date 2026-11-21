@@ -18,6 +18,21 @@ const formatter = new Intl.DateTimeFormat("en-us", {
 	second: "2-digit",
 	hourCycle: "h12"
 });
+const notify = (message, body) => {
+	if (!("Notification" in window)) {
+		return;
+	}
+	if (Notification.permission === "granted") {
+		new Notification(message, { body })
+	}
+	else if (Notification.permission === "denied") {
+		Notification.requestPermission().then((permission) => {
+			if (permission === "granted") {
+				new Notification(message, { body });
+			}
+		});
+	}
+};
 
 function DatabaseProvider({ children, client, students, setStudents, activities, setActivities, occurrences, setOccurrences }) {
 	return (
@@ -196,9 +211,7 @@ function AdminPanel({ setShowResults }) {
 			student.name = studentName;
 			student.config.color = studentColor;
 			student.id = await client.students.insert(student);
-			if (Notification.permission === "granted") {
-				new Notification("Student added", { body: `Successfully added student ${studentName}` });
-			}
+			notify("Student added", `Successfully added student ${studentName}`);
 			setStudents((students) => {
 				return [...students, student];
 			});
@@ -321,9 +334,7 @@ function Student({ student }) {
 			));
 		}
 		else {
-			if (Notification.permission === "granted") {
-				new Notification("Activity already tracked", { body: `Activity ${activity.name} already tracked for ${student.name}` });
-			}
+			notify("Activity already tracked", `Activity ${activity.name} already tracked for ${student.name}`);
 		}
 		form.reset();
 	};
@@ -335,9 +346,7 @@ function Student({ student }) {
 			await client.occurrences.removeByStudentId(student);
 			setStudents((students) => students.filter((s) => s.id !== student.id))
 			setOccurrences((occurrences) => occurrences.filter((o) => o.studentId !== student.id))
-			if (Notification.permission === "granted") {
-				new Notification("Student deleted", { body: `Deleted ${student.name}` });
-			}
+			notify("Student deleted", `Deleted ${student.name}`);
 		}
 	};
 
@@ -386,9 +395,7 @@ function Activity({ student, activity }) {
 		occurrence.timestamp = formatter.format(new Date())
 		occurrence.id = await client.occurrences.insert(occurrence);
 		setOccurrences((occurrences) => [occurrence, ...occurrences]);
-		if (Navigation.permission === "granted") {
-			new Notification("Occurrence recorded", { body: `Recorded ${activity.name} occurrence for ${student.name}` });
-		}
+		notify("Occurrence recorded", `Recorded ${activity.name} occurrence for ${student.name}`);
 	};
 	const removeOccurrences = async (event) => {
 		event.preventDefault();
@@ -405,9 +412,7 @@ function Activity({ student, activity }) {
 				return true;
 			})
 		))
-		if (Navigation.permission === "granted") {
-			new Notification("Occurrences removed", { body: `Removed ${activity.name} occurrences for ${student.name}` });
-		}
+		notify("Occurrences removed", `Removed ${activity.name} occurrences for ${student.name}`);
 	};
 	const untrackActivity = async (event) => {
 		event.preventDefault();
@@ -425,9 +430,7 @@ function Activity({ student, activity }) {
 				return s;
 			})
 		));
-		if (Navigation.permission === "granted") {
-			new Notification("Occurrence tracking removed", { body: `No longer tracking ${activity.name} occurrences for ${student.name}` });
-		}
+		notify("Occurrence tracking removed", `No longer tracking ${activity.name} occurrences for ${student.name}`);
 	};
 
 	return (
