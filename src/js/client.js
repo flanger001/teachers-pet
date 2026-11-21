@@ -77,16 +77,15 @@ export const initializeDatabaseClient = () => {
 					occurrenceObjectStore.createIndex("studentId", "studentId");
 					occurrenceObjectStore.createIndex("activityId", "activityId");
 					console.log(`Created ${OCCURRENCE_OBJECT_STORE_NAME} store`);
-					break;
 				}
 				case event.oldVersion < 3: {
 					// Activities migration
+					console.log("Migrating activities");
 					const transaction = event.target.transaction;
 					const activityObjectStore = transaction.objectStore(ACTIVITY_OBJECT_STORE_NAME);
 					const studentObjectStore = transaction.objectStore(STUDENT_OBJECT_STORE_NAME);
 					const occurrenceObjectStore = transaction.objectStore(OCCURRENCE_OBJECT_STORE_NAME);
 					const activitiesRequest = activityObjectStore.getAll();
-
 					activitiesRequest.onsuccess = (_activitiesEvent) => {
 						const activities = activitiesRequest.result;
 						const studentsRequest = studentObjectStore.getAll();
@@ -116,7 +115,7 @@ export const initializeDatabaseClient = () => {
 									for (const student of students) {
 										if (student.activities.includes(activity.id)) {
 											console.log(student);
-											console.log(activity)
+											console.log(activity);
 											const idx = student.activities.findIndex((a) => activity.id === a);
 											student.activities.splice(idx, 1);
 											student.activities.push(oldActivity.id);
@@ -126,10 +125,10 @@ export const initializeDatabaseClient = () => {
 									activityObjectStore.delete(activity[activityObjectStore.keyPath]);
 
 								}
-								activityObjectStore.deleteIndex("name");
-								activityObjectStore.createIndex("name", "name", { unique: true });
 							}
 						}
+						activityObjectStore.deleteIndex("name");
+						activityObjectStore.createIndex("name", "name", { unique: true });
 					}
 				}
 				default: break;
