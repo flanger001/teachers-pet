@@ -2,6 +2,7 @@ import { initializeDatabaseClient } from "./client.js";
 import { Activities } from "./activities.js";
 import { Occurrences } from "./occurrences.js";
 import { Students } from "./students.js";
+import { notify } from "./notify.js";
 
 const formatter = new Intl.DateTimeFormat("en-us", {
 	year: "numeric",
@@ -18,14 +19,7 @@ const initializeApp = async () => {
 	// Initialize the database client
 	const client = await initializeDatabaseClient();
 	let permission = false;
-	// Request notification permission
-	try {
-		permission = await Notification.requestPermission();
-	}
-	catch (e) {
-		console.log("Could not get notification permisson, likely because we are on mobile");
-	}
-	console.log("Notification permission", permission);
+
 	// Containers and buttons
 	const deleteDatabaseButton = document.getElementById("delete-database");
 	const studentsContainer = document.getElementById("students");
@@ -71,9 +65,8 @@ const initializeApp = async () => {
 			student.name = studentName;
 			student.config.color = studentColor;
 			student.id = await client.students.insert(student);
-			if (permission === "granted") {
-				new Notification("Student added", { body: `Successfully added student ${studentName}` });
-			}
+			notify("Student added", `Successfully added student ${studentName}`);
+
 			const studentElement = createStudentElement(student);
 			studentsContainer.appendChild(studentElement);
 			addStudentForm.reset();
@@ -169,9 +162,8 @@ const initializeApp = async () => {
 				activitiesContainer.appendChild(activityElement);
 			}
 			else {
-				if (permission === "granted") {
-					new Notification("Activity already tracked", { body: `Activity ${activity.name} already tracked for ${student.name}` });
-				}
+				notify("Activity already tracked", `Activity ${activity.name} already tracked for ${student.name}`);
+
 			}
 			studentForm.reset();
 		});
@@ -184,9 +176,8 @@ const initializeApp = async () => {
 				await client.students.delete(student);
 				await client.occurrences.removeByStudentId(student);
 				container.remove();
-				if (permission === "granted") {
-					new Notification("Student deleted", { body: `Deleted ${student.name}` });
-				}
+				notify("Student deleted", `Deleted ${student.name}`);
+
 				if (toggleResultsButton.dataset.toggle === "open") {
 					createResults();
 				}
@@ -212,9 +203,8 @@ const initializeApp = async () => {
 			occurrence.studentId = student.id;
 			occurrence.timestamp = formatter.format(new Date());
 			occurrence.id = await client.occurrences.insert(occurrence);
-			if (permission === "granted") {
-				new Notification("Occurrence recorded", { body: `Recorded ${activity.name} occurrence for ${student.name}` });
-			}
+			notify("Occurrence recorded", `Recorded ${activity.name} occurrence for ${student.name}`);
+
 			if (toggleResultsButton.dataset.toggle === "open") {
 				createResults();
 			}
@@ -226,9 +216,8 @@ const initializeApp = async () => {
 				return;
 			}
 			await client.occurrences.removeByStudentId(student);
-			if (permission === "granted") {
-				new Notification("Occurrences removed", { body: `Removed ${activity.name} occurrences for ${student.name}` });
-			}
+			notify("Occurrences removed", `Removed ${activity.name} occurrences for ${student.name}`);
+
 			if (toggleResultsButton.dataset.toggle === "open") {
 				createResults();
 			}
@@ -240,9 +229,8 @@ const initializeApp = async () => {
 				return;
 			}
 			await client.students.untrackActivity(student, activity);
-			if (permission === "granted") {
-				new Notification("Occurrence tracking removed", { body: `No longer tracking ${activity.name} occurrences for ${student.name}` });
-			}
+			notify("Occurrence tracking removed", `No longer tracking ${activity.name} occurrences for ${student.name}`);
+
 			container.remove();
 		});
 
