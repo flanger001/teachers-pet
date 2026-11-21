@@ -263,9 +263,22 @@ const initializeApp = async () => {
 			for (const occurrence of occurrences) {
 				const activity = activities.find((activity) => occurrence.activityId === activity.id);
 				const recordElement = document.importNode(recordTemplate.content, true);
+				const container = recordElement.querySelector("tr");
+				container.dataset.occurrenceId = occurrence.id;
 				recordElement.querySelector(".name").textContent = student.name;
 				recordElement.querySelector(".activity").textContent = activity.name;
 				recordElement.querySelector(".timestamp").textContent = occurrence.timestamp;
+				const deleteOccurrence = async (event) => {
+					event.preventDefault();
+					event.stopPropagation();
+					if (!confirm("Delete occurrence?")) {
+						return;
+					}
+					await client.occurrences.delete(occurrence);
+					container.remove();
+				};
+				recordElement.querySelector(".button").addEventListener("click", deleteOccurrence);
+
 				recordsContainer.appendChild(recordElement);
 			}
 		}
