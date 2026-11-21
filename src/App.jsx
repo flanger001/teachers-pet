@@ -9,6 +9,7 @@ const DatabaseContext = createContext(null);
 const StudentsContext = createContext(null);
 const ActivitiesContext = createContext(null);
 const OccurrencesContext = createContext(null);
+const StudentContext = createContext(null);
 const formatter = new Intl.DateTimeFormat("en-us", {
 	year: "numeric",
 	month: "2-digit",
@@ -32,6 +33,13 @@ const notify = (message, body) => {
 			}
 		});
 	}
+};
+let debounceTimeout;
+const debounce = (fn) => {
+	if (debounceTimeout) {
+		clearTimeout(debounceTimeout);
+	}
+	debounceTimeout = setTimeout(fn, 250);
 };
 
 function DatabaseProvider({ children, client, students, setStudents, activities, setActivities, occurrences, setOccurrences }) {
@@ -95,7 +103,7 @@ function App() {
 	return (
 		clientLoaded &&
 		<>
-			<header>
+			<header className="site-banner">
 				<h1 className="text-center">Student Activity Log</h1>
 			</header>
 			<main>
@@ -111,7 +119,7 @@ function App() {
 					<ActivitiesDatalist id={datalistId}></ActivitiesDatalist>
 					<AdminPanel setShowResults={setShowResults}></AdminPanel>
 					<StudentsContainer />
-					{showResults && <ResultsPanel />}
+					{showResults && <OccurrencesContainer />}
 				</DatabaseProvider>
 			</main>
 			<footer>
@@ -122,7 +130,7 @@ function App() {
 	)
 }
 
-function ResultsPanel() {
+function OccurrencesContainer() {
 	const { students } = useContext(StudentsContext);
 	const { activities } = useContext(ActivitiesContext);
 	const { occurrences, setOccurrences } = useContext(OccurrencesContext);
@@ -140,19 +148,24 @@ function ResultsPanel() {
 	});
 
 	return (
-		<table className="activities-table">
-			<thead>
-				<tr className="header-row">
-					<th>Student name</th>
-					<th>Activity</th>
-					<th>Timestamp</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody className="records">
-				{mappedOccurrences.map((occurrence) => <Occurrence key={occurrence.id} occurrence={occurrence} setOccurrences={setOccurrences} />)}
-			</tbody>
-		</table>
+		<div className="results-container">
+			<h2 className="results-container__header">Occurrences list</h2>
+			<div className="results">
+				<table className="occurrences-table">
+					<thead>
+						<tr className="header-row">
+							<th>Student name</th>
+							<th>Activity</th>
+							<th>Timestamp</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody className="records">
+						{mappedOccurrences.map((occurrence) => <Occurrence key={occurrence.id} occurrence={occurrence} setOccurrences={setOccurrences} />)}
+					</tbody>
+				</table>
+			</div>
+		</div>
 	)
 }
 
@@ -170,11 +183,11 @@ function Occurrence({ occurrence }) {
 	}
 
 	return (
-		<tr className="activity-row">
+		<tr className="occurrence-row">
 			<td className="name">{occurrence.studentName}</td>
 			<td className="activity">{occurrence.activityName}</td>
 			<td className="timestamp">{occurrence.timestamp}</td>
-			<td><button className="delete-button button" onClick={deleteOccurrence}>×</button></td>
+			<td className="actions"><button className="delete-button button" onClick={deleteOccurrence}>×</button></td>
 		</tr>
 	)
 }
@@ -196,6 +209,9 @@ function AdminPanel({ setShowResults }) {
 	const deleteDatabase = (event) => {
 		event.preventDefault();
 		event.stopPropagation();
+		if (!confirm("Delete database? This will remove all records and reload the page.")) {
+			return;
+		}
 		client.deleteDatabase();
 		window.location.reload();
 	};
@@ -252,46 +268,40 @@ function AdminPanel({ setShowResults }) {
 	}
 
 	return (
-		<div className="admin-controls">
-			<h2 className="admin-controls__header">Admin controls</h2>
-			<form className="form" onSubmit={addStudent}>
-				<div className="form-control">
-					<label className="label" htmlFor="student-name" placeholder="Student name (required)">Student name</label>
-					<input className="input-text" type="text" name="student-name" required />
+		<div className="admin-controls-container">
+			<h2 className="admin-controls-container__header">Admin controls</h2>
+			<div className="admin-controls">
+				<form className="form add-student-form" onSubmit={addStudent}>
+					<div className="form-control">
+						<label className="label sr-only" htmlFor="student-name">New student name</label>
+						<input className="input-text" type="text" name="student-name" placeholder="New student name (required)" required />
+					</div>
+					<div className="form-control">
+						<label className="label" htmlFor="student-color">Color</label>
+						<input className="input-color" type="color" name="student-color" defaultValue="#e0e0ff" />
+					</div>
+					<div className="form-control">
+						<button className="input-submit button" type="submit">Add new student</button>
+					</div>
+				</form>
+				<div className="admin-actions">
+					<button className="button" onClick={deleteDatabase}>Delete Database</button>
+					<button className="button" onClick={toggleShowResults}>Toggle Activities</button>
+					<button className="button" onClick={exportActivities}>Export Activities</button>
 				</div>
-				<div className="form-control">
-					<label className="label" htmlFor="student-color">Color</label>
-					<input className="input-color" type="color" name="student-color" defaultValue="#e0e0ff" />
-				</div>
-				<div className="form-control">
-					<input className="input-submit button" type="submit" defaultValue="Add student" />
-				</div>
-			</form>
-			<div className="form-control">
-				<button className="button" onClick={deleteDatabase}>Delete all data (will reload page)</button>
-				<button className="button" onClick={toggleShowResults}>Toggle Activities</button>
-				<button className="button" onClick={exportActivities}>Export Activities</button>
 			</div>
 		</div>
 	)
 }
 
 function StudentsContainer() {
-	const { students, setStudents } = useContext(StudentsContext);
-	const { activities, setActivities } = useContext(ActivitiesContext);
-	const { setOccurrences } = useContext(OccurrencesContext);
+	const { students } = useContext(StudentsContext);
+
 	return (
-		<div className="students-container" id="students-container">
+		<div className="students-container">
 			<h2 className="students-container__header">Students list</h2>
-			<div className="students" id="students">
-				{students.map((student) => (
-					<Student key={student.id}
-						student={student}
-						setStudents={setStudents}
-						activities={activities}
-						setActivities={setActivities}
-						setOccurrences={setOccurrences} />
-				))}
+			<div className="students">
+				{students.map((student) => <Student key={student.id} student={student} />)}
 			</div>
 		</div>
 	)
@@ -350,39 +360,71 @@ function Student({ student }) {
 		}
 	};
 
+	const updateColor = (event) => debounce(
+		async () => {
+			const color = event.target.value;
+			student.config.color = color;
+			await client.students.update(student);
+			setStudents((students) => (
+				students.map((s) => {
+					if (s.id === student.id) {
+						s.config.color = color;
+					}
+					return s;
+				})
+			));
+		}
+	);
+
+	const updateName = (event) => debounce(
+		async () => {
+			const name = event.target.value;
+			student.name = name;
+			await client.students.update(student);
+			setStudents((students) => (
+				students.map((s) => {
+					if (s.id === student.id) {
+						s.name = name;
+					}
+					return s;
+				})
+			));
+		}
+	);
+
 	return (
-		<div className="student" style={{ backgroundColor: student.config.color }}>
-			<div className="student-header">
-				<h2 className="student-name">{student.name}</h2>
-				<button className="delete-button button" title="Delete Student" onClick={deleteStudent}>×</button>
-			</div>
-			<form className="form student-activity-form" onSubmit={trackActivity}>
-				<div className="form-control">
-					<label className="label" htmlFor="activity">New activity name</label>
-					<input className="input-text" type="text" name="activity-name" list={datalistId} required />
+		<StudentContext value={student}>
+			<div className="student" style={{ backgroundColor: student.config.color }}>
+				<div className="student-controls">
+					<label className="label sr-only" htmlFor="student-name">Student name</label>
+					<input className="student-name" name="student-name" defaultValue={student.name} style={{ backgroundColor: student.config.color }} onFocus={(event) => event.target.style.backgroundColor = "#eee"} onBlur={(event) => event.target.style.backgroundColor = student.config.color} onChange={updateName} />
+					<label className="label sr-only" htmlFor="student-color">Student color</label>
+					<input type="color" name="student-color" onChange={updateColor} defaultValue={student.config.color} />
+					<button className="delete-button button" title="Delete Student" onClick={deleteStudent}>×</button>
 				</div>
-				<div className="form-control">
-					<input className="input-submit button" type="submit" value="Track activity" />
+				<form className="form student-activity-form" onSubmit={trackActivity}>
+					<div className="form-control">
+						<label className="label sr-only" htmlFor="activity">New activity name</label>
+						<input className="input-text" type="text" name="activity-name" placeholder="Select or add activity to track here" list={datalistId} required />
+					</div>
+					<div className="form-control">
+						<input className="input-submit button" type="submit" value="Track activity" />
+					</div>
+				</form>
+				<div className="student-activities">
+					<ActivitiesDatalist student={student} id={datalistId}></ActivitiesDatalist>
+					<h4>Tracked activities</h4>
+					{studentActivities.map((activity) => (
+						<StudentActivity key={activity.id} student={student} activity={activity} />
+					))}
 				</div>
-			</form>
-			<div className="student-activities">
-				<ActivitiesDatalist student={student} id={datalistId}></ActivitiesDatalist>
-				<h3>Tracked activities</h3>
-				{studentActivities.map((activity) => (
-					<Activity
-						key={activity.id}
-						student={student}
-						setStudents={setStudents}
-						activity={activity}
-						setOccurrences={setOccurrences}
-					/>
-				))}
 			</div>
-		</div>
+		</StudentContext>
 	)
 }
 
-function Activity({ student, activity }) {
+function StudentActivity({ activity }) {
+	const student = useContext(StudentContext);
 	const client = useContext(DatabaseContext);
 	const { setStudents } = useContext(StudentsContext);
 	const { setOccurrences } = useContext(OccurrencesContext);
@@ -434,12 +476,14 @@ function Activity({ student, activity }) {
 	};
 
 	return (
-		<div className="activity-buttons" key={activity.id}>
-			<p className="activity-name">{activity.name}</p>
-			<button className="button record-occurrence-button" onClick={recordOccurrence}>Record occurrence</button>
-			<button className="button remove-occurrence-button" onClick={removeOccurrences}>Remove all occurrences</button>
-			<button className="button untrack-activity-button" onClick={untrackActivity}>Stop tracking</button>
-		</div>
+		<section className="activity" key={activity.id}>
+			<h5 className="activity-name text-center">{activity.name}</h5>
+			<div className="activity-controls">
+				<button className="button record-occurrence" onClick={recordOccurrence}>Record occurrence</button>
+				<button className="button remove-occurrence" onClick={removeOccurrences}>Remove all occurrences</button>
+				<button className="button untrack-activity" onClick={untrackActivity}>Stop tracking</button>
+			</div>
+		</section>
 	)
 }
 
