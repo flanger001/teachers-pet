@@ -196,6 +196,9 @@ function AdminPanel({ setShowResults }) {
 	const deleteDatabase = (event) => {
 		event.preventDefault();
 		event.stopPropagation();
+		if (!confirm("Delete database? This will remove all records and reload the page.")) {
+			return;
+		}
 		client.deleteDatabase();
 		window.location.reload();
 	};
@@ -267,8 +270,8 @@ function AdminPanel({ setShowResults }) {
 					<input className="input-submit button" type="submit" defaultValue="Add student" />
 				</div>
 			</form>
-			<div className="form-control">
-				<button className="button" onClick={deleteDatabase}>Delete all data (will reload page)</button>
+			<div className="form-control admin-buttons">
+				<button className="button" onClick={deleteDatabase}>Delete Database</button>
 				<button className="button" onClick={toggleShowResults}>Toggle Activities</button>
 				<button className="button" onClick={exportActivities}>Export Activities</button>
 			</div>

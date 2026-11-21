@@ -1,7 +1,12 @@
 body {
   padding: 10px 30px 30px 30px;
-  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+  font-family: 'Franklin Gothic Medium', Helvetica, 'Arial Narrow', Arial, sans-serif;
   overflow-y: scroll;
+  margin: 0 auto;
+
+  @media (max-width: 480px) {
+    padding: 20px 10px 0px 10px;
+  }
 }
 
 h1,
@@ -18,26 +23,31 @@ h6 {
   margin-bottom: 10px;
 }
 
-.label {
-  display: inline-block;
-  min-width: 150px;
-  margin-bottom: 10px;
-}
-
 .form-control {
   margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: 20% auto;
+  align-items: center;
+
+  .label {
+    margin-bottom: 10px;
+  }
+
+  .input-text {
+    padding: 10px;
+  }
+
+  .input-color {
+    box-sizing: content-box;
+    padding: 10px;
+    min-height: 25px;
+  }
 }
 
-.input-text {
-  padding: 10px;
-  width: 250px;
-}
-
-.input-color {
-  box-sizing: content-box;
-  width: 250px;
-  padding: 10px;
-  min-height: 25px;
+.admin-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 .student {
@@ -65,8 +75,13 @@ h6 {
 
 .students {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(1, 1fr);
+    gap: initial;
+  }
 }
 
 .student-header {
@@ -94,37 +109,49 @@ h6 {
 }
 
 .activity-buttons {
+  padding: 10px 20px 20px 0px;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 10px;
-  padding: 10px 20px 20px 0px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 100px repeat(3, 1fr);
+  }
 
   .button {
     padding-left: 3px;
     padding-right: 3px;
     font-size: 0.75rem;
-  }
-}
 
-.activity-name {
-  grid-column-start: 1;
-  grid-column-end: 3;
-}
-
-.activities-table {
-  table-layout: fixed;
-  width: 90%;
-  /* margin: 10px auto; */
-  border-collapse: collapse;
-
-  & .header-row {
-    text-align: left;
-    font-size: 1.5rem;
-    font-weight: 800;
+    @media (max-width: 480px) {
+      margin: initial
+    }
   }
 
-  th,
-  td {
-    padding: 0.6rem;
+  .activity-name {
+    grid-column-start: 1;
+    grid-column-end: 3;
+
+    @media (max-width: 480px) {
+      grid-column: auto / auto;
+    }
+  }
+
+  .activities-table {
+    table-layout: fixed;
+    width: 90%;
+    /* margin: 10px auto; */
+    border-collapse: collapse;
+
+    & .header-row {
+      text-align: left;
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+
+    th,
+    td {
+      padding: 0.6rem;
+    }
   }
 }
