@@ -7,6 +7,77 @@ Large  - >= 1024 px
 */
 
 /* Globals */
+:root,
+:root[data-theme="light"] {
+  --background-color-base: #fff;
+  --text-color-base: #111;
+  --background-color-alternate-1: #f1f1f1;
+  --text-color-alternate-1: #222;
+  --delete-button-background-color: #ff1111;
+  --delete-button-background-hover: #ff9999;
+  --spacing: 0.25rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-color-base: #222;
+    --text-color-base: #eee;
+    --background-color-alternate-1: #333;
+    --text-color-alternate-1: #ddd;
+    --delete-button-background-color: #aa1111;
+    --delete-button-background-hover: #aa9999;
+  }
+}
+
+:root[data-theme="dark"] {
+  --background-color-base: #222;
+  --text-color-base: #eee;
+  --background-color-alternate-1: #333;
+  --text-color-alternate-1: #ddd;
+  --delete-button-background-color: #aa1111;
+  --delete-button-background-hover: #aa9999;
+}
+
+.theme-selector {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+
+  button {
+    border: 0;
+    background: transparent;
+  }
+
+  svg {
+    height: calc(var(--spacing) * 6);
+    width: calc(var(--spacing) * 6);
+  }
+
+  .light {
+    fill: oklch(95.4% 0.038 75.164);
+    stroke: oklch(75% 0.183 55.934);
+    .path1 {
+      fill: oklch(95.4% 0.038 75.164);
+      stroke: oklch(75% 0.183 55.934);
+    }
+    .path2 {
+      stroke: oklch(75% 0.183 55.934);
+    }
+  }
+
+  .dark {
+    .path1 {
+      fill: color-mix(in oklab, oklch(74.6% 0.16 232.661) 20%, transparent);
+    }
+    .path2 {
+      fill: oklch(68.5% 0.169 237.323);
+    }
+    .path3 {
+      fill: oklch(50% 0.134 242.749);
+    }
+  }
+}
+
 html {
   font-size: 16.25px;
   color-scheme: light dark;
@@ -20,10 +91,8 @@ body {
   display: flex;
   font-size: 1rem;
   flex-direction: column;
-  @media (prefers-color-scheme: dark) {
-    background-color: #222;
-    color: #eee;
-  }
+  background-color: var(--background-color-base);
+  color: var(--text-color-base);
 }
 
 h1,
@@ -77,25 +146,21 @@ p {
 
 /* Inputs & forms */
 
-.input-text {
+.input-text,
+.input-submit {
   padding: 10px;
+  background-color: var(--background-color-alternate-1);
+  color: var(--text-color-alternate-1);
 }
 
 .input-color {
   box-sizing: content-box;
-  padding: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
   min-height: 25px;
-}
-
-.delete-button {
-  --delete-button-background-color: #ff1111;
-  background-color: var(--delete-button-background-color);
-  transition: background-color 0.1s;
-
-  &:hover {
-    cursor: pointer;
-    background-color: #ff9999;
-  }
+  background-color: var(--background-color-alternate-1);
+  color: var(--text-color-alternate-1);
+  border: 0
 }
 
 .button {
@@ -103,7 +168,21 @@ p {
   border-width: 1px;
   border-color: #888;
   border-radius: 10px;
+  background-color: var(--background-color-alternate-1);
+  color: var(--text-color-alternate-1);
 }
+
+.delete-button {
+  background-color: var(--delete-button-background-color);
+  transition: background-color 0.1s;
+
+  &:hover {
+    cursor: pointer;
+    background-color: var(--delete-button-background-color-hover);
+  }
+}
+
+
 
 /* Containers */
 .admin-controls-container {
@@ -111,12 +190,9 @@ p {
 }
 
 .admin-controls {
-  background-color: #eee;
+  background-color: var(--background-color-alternate-1);
+  color: var(--text-color-alternate-1);
   max-width: 480px;
-  @media (prefers-color-scheme: dark) {
-    background-color: #333;
-    color: #eee;
-  }
 }
 
 .add-student-form {
@@ -158,6 +234,7 @@ p {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  color: var(--text-color-alternate-1);
 }
 
 .student-activity-form {
@@ -172,11 +249,8 @@ p {
 }
 
 .results {
-  background-color: #eee;
-  @media (prefers-color-scheme: dark) {
-    background-color: #333;
-    color: #eee;
-  }
+  background-color: var(--background-color-alternate-1);
+  color: var(--text-color-alternate-1);
 }
 
 /* Components */
@@ -187,9 +261,11 @@ p {
   .student-name {
     font-weight: 600;
     border: 0;
+    color: var(--text-color-base);
 
     &:focus {
-      background-color: #eee;
+      background-color: var(--background-color-base);
+      color: var(--text-color-base);
     }
   }
 
@@ -200,6 +276,12 @@ p {
     align-items: center;
     padding-top: 10px;
     margin-bottom: 20px;
+
+    .input-color {
+      padding: 0;
+      margin-right: 10px;
+      margin-left: 10px;
+    }
   }
 }
 

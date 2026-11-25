@@ -10,6 +10,7 @@ const StudentsContext = createContext(null);
 const ActivitiesContext = createContext(null);
 const OccurrencesContext = createContext(null);
 const StudentContext = createContext(null);
+const ThemeContext = createContext(null);
 const formatter = new Intl.DateTimeFormat("en-us", {
 	year: "numeric",
 	month: "2-digit",
@@ -67,6 +68,7 @@ function App() {
 		const toggleCached = window.localStorage.getItem("toggle-state");
 		return toggleCached === "open" ? true : false;
 	});
+	const [theme, setTheme] = useState(() => window.localStorage.getItem("theme") || "light");
 
 	useEffect(() => {
 		initializeDatabaseClient().then((db) => {
@@ -100,6 +102,26 @@ function App() {
 		}
 	}, [showResults]);
 
+	useEffect(() => {
+		if (theme === "dark") {
+			document.documentElement.dataset.theme = "dark";
+		}
+		else {
+			document.documentElement.dataset.theme = "light";
+		}
+	}, [theme]);
+
+	const toggleTheme = () => {
+		if (theme === "light") {
+			window.localStorage.setItem("theme", "dark");
+			setTheme("dark");
+		}
+		else {
+			window.localStorage.setItem("theme", "light");
+			setTheme("light");
+		}
+	};
+
 	return (
 		clientLoaded &&
 		<>
@@ -107,6 +129,7 @@ function App() {
 				<h1 className="text-center">Student Activity Log</h1>
 			</header>
 			<main>
+				<ThemeSelector theme={theme} toggleTheme={toggleTheme} />
 				<DatabaseProvider
 					client={client}
 					students={students}
@@ -117,8 +140,10 @@ function App() {
 					setOccurrences={setOccurrences}
 				>
 					<ActivitiesDatalist id={datalistId}></ActivitiesDatalist>
-					<AdminPanel setShowResults={setShowResults}></AdminPanel>
-					<StudentsContainer />
+					<ThemeContext value={theme}>
+						<AdminPanel setShowResults={setShowResults}></AdminPanel>
+						<StudentsContainer />
+					</ThemeContext>
 					{showResults && <OccurrencesContainer />}
 				</DatabaseProvider>
 			</main>
@@ -127,6 +152,38 @@ function App() {
 			</footer>
 		</>
 
+	)
+}
+
+function ThemeSelector({ theme, toggleTheme }) {
+	return (
+		<div className="theme-selector">
+			<label className="sr-only" htmlFor="theme-selector">Theme</label>
+			<button type="button" role="switch" id="theme-selector" onClick={toggleTheme}>
+				{
+					theme === "light" ?
+						(
+							<svg
+								viewBox="0 0 24 24"
+								fill="none"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								className="light"
+							>
+								<path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" className="path1"></path>
+								<path d="M12 4v1M17.66 6.344l-.828.828M20.005 12.004h-1M17.66 17.664l-.828-.828M12 20.01V19M6.34 17.664l.835-.836M3.995 12.004h1.01M6 6l.835.836" className="path2"></path>
+							</svg>
+
+						) : (
+							<svg viewBox="0 0 24 24" fill="none" className="dark">
+								<path fillRule="evenodd" clipRule="evenodd" d="M17.715 15.15A6.5 6.5 0 0 1 9 6.035C6.106 6.922 4 9.645 4 12.867c0 3.94 3.153 7.136 7.042 7.136 3.101 0 5.734-2.032 6.673-4.853Z" className="path1"></path>
+								<path d="m17.715 15.15.95.316a1 1 0 0 0-1.445-1.185l.495.869ZM9 6.035l.846.534a1 1 0 0 0-1.14-1.49L9 6.035Zm8.221 8.246a5.47 5.47 0 0 1-2.72.718v2a7.47 7.47 0 0 0 3.71-.98l-.99-1.738Zm-2.72.718A5.5 5.5 0 0 1 9 9.5H7a7.5 7.5 0 0 0 7.5 7.5v-2ZM9 9.5c0-1.079.31-2.082.845-2.93L8.153 5.5A7.47 7.47 0 0 0 7 9.5h2Zm-4 3.368C5 10.089 6.815 7.75 9.292 6.99L8.706 5.08C5.397 6.094 3 9.201 3 12.867h2Zm6.042 6.136C7.718 19.003 5 16.268 5 12.867H3c0 4.48 3.588 8.136 8.042 8.136v-2Zm5.725-4.17c-.81 2.433-3.074 4.17-5.725 4.17v2c3.552 0 6.553-2.327 7.622-5.537l-1.897-.632Z" className="path2"></path><path fillRule="evenodd" clipRule="evenodd" d="M17 3a1 1 0 0 1 1 1 2 2 0 0 0 2 2 1 1 0 1 1 0 2 2 2 0 0 0-2 2 1 1 0 1 1-2 0 2 2 0 0 0-2-2 1 1 0 1 1 0-2 2 2 0 0 0 2-2 1 1 0 0 1 1-1Z" className="path3"></path>
+							</svg>
+						)
+				}
+			</button>
+		</div>
 	)
 }
 
@@ -309,6 +366,7 @@ function StudentsContainer() {
 
 function Student({ student }) {
 	const client = useContext(DatabaseContext);
+	const theme = useContext(ThemeContext)
 	const { setStudents } = useContext(StudentsContext);
 	const { activities, setActivities } = useContext(ActivitiesContext);
 	const { setOccurrences } = useContext(OccurrencesContext);
@@ -397,10 +455,10 @@ function Student({ student }) {
 			<div className="student" style={{ backgroundColor: student.config.color }}>
 				<div className="student-controls">
 					<label className="label sr-only" htmlFor="student-name">Student name</label>
-					<input className="student-name" name="student-name" defaultValue={student.name} style={{ backgroundColor: student.config.color }} onFocus={(event) => event.target.style.backgroundColor = "#eee"} onBlur={(event) => event.target.style.backgroundColor = student.config.color} onChange={updateName} />
+					<input className="student-name" name="student-name" defaultValue={student.name} style={{ backgroundColor: student.config.color }} onFocus={(event) => event.target.style.backgroundColor = theme === "light" ? "#fff" : "#222"} onBlur={(event) => event.target.style.backgroundColor = student.config.color} onChange={updateName} />
 					<label className="label sr-only" htmlFor="student-color">Student color</label>
-					<input type="color" name="student-color" onChange={updateColor} defaultValue={student.config.color} />
-					<button className="delete-button button" title="Delete Student" onClick={deleteStudent}>×</button>
+					<input className="input-color" type="color" name="student-color" onChange={updateColor} defaultValue={student.config.color} title="Student color" />
+					<button className="button delete-button" title="Delete Student" onClick={deleteStudent}>×</button>
 				</div>
 				<form className="form student-activity-form" onSubmit={trackActivity}>
 					<div className="form-control">
