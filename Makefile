@@ -5,8 +5,8 @@ zip:
 	zip -r site-v`cat version`.zip dist
 
 tag:
-	COMMIT_COUNT=$$(git rev-list origin/react..react --count) && git tag -a v`cat version` -m "`git log --format=%B -n $$COMMIT_COUNT`"
-	git push --follow-tags origin react
+	COMMIT_COUNT=$$(git rev-list origin/main..main --count) && git tag -a v`cat version` -m "`git log --format=%B -n $$COMMIT_COUNT`"
+	git push --follow-tags origin main
 
 sync:
 	ssh happynas "mkdir -p /volume3/Objects/www/sites/teachers-pet && rm -r /volume3/Objects/www/sites/teachers-pet/*"
