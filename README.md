@@ -1,4 +1,7 @@
-# Teacher's Pet
+# Teacher's Pet [OBSOLETE]
+
+**This is the original implementation branch and has been archived as of November 26, 2026.**
+**No new features will be added or backported to this branch and it exists only for historical reference.**
 
 Kelly Arl's classroom activity recorder.
 
