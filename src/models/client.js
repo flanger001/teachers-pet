@@ -1,6 +1,6 @@
-import { Activities } from "./activities.js";
-import { Occurrences } from "./occurrences.js";
-import { Students } from "./students.js";
+import { Activities } from "./activities";
+import { Occurrences } from "./occurrences";
+import { Students } from "./students";
 
 export const DATABASE_VERSION = 3;
 export const DATABASE_NAME = "students";
@@ -123,7 +123,6 @@ export const initializeDatabaseClient = () => {
 										}
 									}
 									activityObjectStore.delete(activity[activityObjectStore.keyPath]);
-
 								}
 							}
 						}
